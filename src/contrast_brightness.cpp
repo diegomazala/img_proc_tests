@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include "opencv2/imgcodecs.hpp"
 #include "opencv2/highgui.hpp"
 
 
@@ -8,9 +9,9 @@
 int main(int argc, char** argv)
 {
 	const char* window_name = "Contrast_&_Brightness";
+	const char* window_name2 = "output";
 	// Read original image 
-	cv::Mat src = cv::imread(argv[1], CV_LOAD_IMAGE_ANYCOLOR | CV_LOAD_IMAGE_ANYDEPTH);
-	
+	cv::Mat src = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
 	
 	//if fail to read the image
 	if (!src.data)
@@ -21,24 +22,26 @@ int main(int argc, char** argv)
 
 	cv::Mat dst = cv::Mat::zeros(src.size(), src.type());
 
+	const uint8_t bits_per_sample = (src.depth() == CV_16U || src.depth() == CV_16S) ? 16 : 8;
+	const uint32_t max_value = pow(2, bits_per_sample);
+	
 	// Create a window
 	cv::namedWindow(window_name, CV_WINDOW_NORMAL);
-	cv::resizeWindow(window_name, 1080 / 2, 1920 / 2);
+	cv::resizeWindow(window_name, 576, 864);
 	cv::moveWindow(window_name, 0, 0);
 
 	//Create trackbar to change brightness
-	int iSliderValue1 = 65535 / 2;
-	cv::createTrackbar("Brightness", window_name, &iSliderValue1, 65535);
+	int iSliderValue1 = max_value / 2;
+	cv::createTrackbar("Brightness", window_name, &iSliderValue1, max_value);
 
 	//Create trackbar to change contrast
 	int iSliderValue2 = 50;
 	cv::createTrackbar("Contrast", window_name, &iSliderValue2, 100);
 
-
 	while (true)
 	{
 		//Change the brightness and contrast of the image (For more infomation http://opencv-srf.blogspot.com/2013/07/change-contrast-of-image-or-video.html)
-		int iBrightness = iSliderValue1 - (65535 / 2);
+		int iBrightness = iSliderValue1 - (max_value / 2);
 		double dContrast = iSliderValue2 / 50.0;
 		
 		src.convertTo(dst, -1, dContrast, (double)iBrightness);
@@ -56,8 +59,12 @@ int main(int argc, char** argv)
 		}
 	}
 
+
+	cv::destroyAllWindows(); //destroy all open windows
+
 	return 0;
 }
+
 
 
 #if 0
