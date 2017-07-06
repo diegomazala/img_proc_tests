@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "contrast_brightness", "contrast_brightness.vcxproj", "{3E266E4A-4215-435E-955E-8243ACF3CB44}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "image_subtraction", "image_subtraction.vcxproj", "{0F2AD727-D9F7-4FE5-81EB-86AA81405893}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -15,6 +17,10 @@ Global
 		{3E266E4A-4215-435E-955E-8243ACF3CB44}.Debug|x64.Build.0 = Debug|x64
 		{3E266E4A-4215-435E-955E-8243ACF3CB44}.Release|x64.ActiveCfg = Release|x64
 		{3E266E4A-4215-435E-955E-8243ACF3CB44}.Release|x64.Build.0 = Release|x64
+		{0F2AD727-D9F7-4FE5-81EB-86AA81405893}.Debug|x64.ActiveCfg = Debug|x64
+		{0F2AD727-D9F7-4FE5-81EB-86AA81405893}.Debug|x64.Build.0 = Debug|x64
+		{0F2AD727-D9F7-4FE5-81EB-86AA81405893}.Release|x64.ActiveCfg = Release|x64
+		{0F2AD727-D9F7-4FE5-81EB-86AA81405893}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
