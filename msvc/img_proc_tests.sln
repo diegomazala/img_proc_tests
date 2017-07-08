@@ -7,6 +7,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "contrast_brightness", "cont
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "image_subtraction", "image_subtraction.vcxproj", "{0F2AD727-D9F7-4FE5-81EB-86AA81405893}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tif_read_write", "tif_read_write.vcxproj", "{1F418F37-A625-4058-A426-8647F27DDBDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -21,6 +23,10 @@ Global
 		{0F2AD727-D9F7-4FE5-81EB-86AA81405893}.Debug|x64.Build.0 = Debug|x64
 		{0F2AD727-D9F7-4FE5-81EB-86AA81405893}.Release|x64.ActiveCfg = Release|x64
 		{0F2AD727-D9F7-4FE5-81EB-86AA81405893}.Release|x64.Build.0 = Release|x64
+		{1F418F37-A625-4058-A426-8647F27DDBDE}.Debug|x64.ActiveCfg = Debug|x64
+		{1F418F37-A625-4058-A426-8647F27DDBDE}.Debug|x64.Build.0 = Debug|x64
+		{1F418F37-A625-4058-A426-8647F27DDBDE}.Release|x64.ActiveCfg = Release|x64
+		{1F418F37-A625-4058-A426-8647F27DDBDE}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
