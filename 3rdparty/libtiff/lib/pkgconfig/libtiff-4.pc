@@ -1,0 +1,11 @@
+prefix=C:/Programs/libtiff/install
+exec_prefix=C:/Programs/libtiff/install
+libdir=C:/Programs/libtiff/install/lib
+includedir=C:/Programs/libtiff/install/include
+
+Name: libtiff
+Description:  Tag Image File Format (TIFF) library.
+Version: 4.0.8
+Libs: -LC:/Programs/libtiff/install/lib -ltiff
+Libs.private: 
+Cflags: -IC:/Programs/libtiff/install/include
