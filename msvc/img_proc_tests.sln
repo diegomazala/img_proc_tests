@@ -9,6 +9,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "image_subtraction", "image_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tif_read_write", "tif_read_write.vcxproj", "{1F418F37-A625-4058-A426-8647F27DDBDE}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libraw_dcraw", "libraw_dcraw.vcxproj", "{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,10 @@ Global
 		{1F418F37-A625-4058-A426-8647F27DDBDE}.Debug|x64.Build.0 = Debug|x64
 		{1F418F37-A625-4058-A426-8647F27DDBDE}.Release|x64.ActiveCfg = Release|x64
 		{1F418F37-A625-4058-A426-8647F27DDBDE}.Release|x64.Build.0 = Release|x64
+		{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}.Debug|x64.ActiveCfg = Debug|x64
+		{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}.Debug|x64.Build.0 = Debug|x64
+		{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}.Release|x64.ActiveCfg = Release|x64
+		{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
