@@ -11,6 +11,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tif_read_write", "tif_read_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libraw_dcraw", "libraw_dcraw.vcxproj", "{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "segmentation", "segmentation.vcxproj", "{C4EE9418-E995-4C75-B11A-C706C88FAF3C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "floodfill", "floodfill.vcxproj", "{7B44692D-72BF-481E-8A5B-FA28876D1E24}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -33,6 +37,14 @@ Global
 		{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}.Debug|x64.Build.0 = Debug|x64
 		{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}.Release|x64.ActiveCfg = Release|x64
 		{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}.Release|x64.Build.0 = Release|x64
+		{C4EE9418-E995-4C75-B11A-C706C88FAF3C}.Debug|x64.ActiveCfg = Debug|x64
+		{C4EE9418-E995-4C75-B11A-C706C88FAF3C}.Debug|x64.Build.0 = Debug|x64
+		{C4EE9418-E995-4C75-B11A-C706C88FAF3C}.Release|x64.ActiveCfg = Release|x64
+		{C4EE9418-E995-4C75-B11A-C706C88FAF3C}.Release|x64.Build.0 = Release|x64
+		{7B44692D-72BF-481E-8A5B-FA28876D1E24}.Debug|x64.ActiveCfg = Debug|x64
+		{7B44692D-72BF-481E-8A5B-FA28876D1E24}.Debug|x64.Build.0 = Debug|x64
+		{7B44692D-72BF-481E-8A5B-FA28876D1E24}.Release|x64.ActiveCfg = Release|x64
+		{7B44692D-72BF-481E-8A5B-FA28876D1E24}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

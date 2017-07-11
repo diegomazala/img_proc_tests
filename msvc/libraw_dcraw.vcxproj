@@ -17,7 +17,7 @@
     <ProjectGuid>{BA38AD7C-7084-4B00-8EEF-F46C904FFBE7}</ProjectGuid>
     <RootNamespace>libraw_dcraw</RootNamespace>
     <ProjectName>libraw_dcraw</ProjectName>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
