@@ -26,19 +26,21 @@ static void show_window(const std::string& window_name, const cv::Mat& img)
 int main(int argc, char* argv[])
 {
 	//check for the input parameter correctness
-	if (argc != 3) 
+	if (argc < 3) 
 	{
-		std::cerr << "Usage: app.exe <bg_image> <fg_image>" << std::endl;
+		std::cerr << "Usage: app.exe <bg_image> <fg_image> <output_filename>" << std::endl;
 		std::cerr << "Abort." << std::endl;
 		return EXIT_FAILURE;
 	}
 
 	const std::string filename_bg = argv[1];
 	const std::string filename_fg = argv[2];
+	const std::string filename_output = (argc > 2) ? argv[3] : "segmentation_result.tif";
 
 	// read the image files in grayscale mode
 	cv::Mat frame_bg = cv::imread(filename_bg, CV_LOAD_IMAGE_GRAYSCALE);
 	cv::Mat frame_fg = cv::imread(filename_fg, CV_LOAD_IMAGE_GRAYSCALE);
+	cv::Mat frame_fg_rgb = cv::imread(filename_fg, CV_LOAD_IMAGE_UNCHANGED);
 
 	if (frame_bg.empty() || frame_fg.empty())
 	{
@@ -74,12 +76,11 @@ int main(int argc, char* argv[])
 	cv::threshold(smooth, binary_threshold, float(max_value) * 0.1f, max_value, cv::THRESH_BINARY);
 
 
-
-	show_window("bg", frame_bg);
-	show_window("fg", frame_fg);
-	show_window("abs_diff", frame_abs_diff);
-	show_window("binary_threshold", binary_threshold);
-	show_window("smooth", smooth);
+	//show_window("bg", frame_bg);
+	//show_window("fg", frame_fg);
+	//show_window("abs_diff", frame_abs_diff);
+	//show_window("binary_threshold", binary_threshold);
+	//show_window("smooth", smooth);
 
 
 	// Floodfill from point (0, 0)
@@ -93,14 +94,18 @@ int main(int argc, char* argv[])
 	// Combine the two images to get the foreground.
 	cv::Mat im_out = (binary_threshold | im_floodfill_inv);
 
-	show_window("im_floodfill", im_floodfill);
-	show_window("im_floodfill_inv", im_floodfill_inv);
-	show_window("im_out", im_out);
+	//show_window("im_floodfill", im_floodfill);
+	//show_window("im_floodfill_inv", im_floodfill_inv);
+	//show_window("im_out", im_out);
 
+	cv::Mat segmentation;
+	frame_fg_rgb.copyTo(segmentation, im_out);
+
+	show_window("segmentation", segmentation);
 
 	cv::waitKey(0);
 
-	cv::imwrite("../data/bg/im_out.tif", im_out);
+	cv::imwrite(filename_output, segmentation);
 	//cv::imwrite("../data/bg/bg_sub_abs.tif", frame_abs_diff);
 
 	//destroy GUI windows
