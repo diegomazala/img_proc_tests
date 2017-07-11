@@ -126,12 +126,20 @@ int main(int argc, char* argv[])
 		cv::Mat segmentation;
 		frame_fg_rgb.copyTo(segmentation, floodfill_out);
 
+		cv::Mat alpha(frame_fg_rgb.rows, frame_fg_rgb.cols, CV_16UC1);
+		floodfill_out.convertTo(alpha, CV_16UC1, 255);	// 8bits to 16bits
+
+		cv::Mat src_imgs[] = { frame_fg_rgb, alpha };
+		int from_to[] = { 0,0, 1,1, 2,2, 3,3 };
+		cv::Mat rgba = cv::Mat(frame_fg_rgb.rows, frame_fg_rgb.cols, CV_16UC4);
+		cv::mixChannels(src_imgs, 2, &(rgba), 1, from_to, 4); 
+
 		std::cout << "Saving result " << i << " ..." << std::endl;
 
 		//
 		// Save result
 		//
-		bool saved = cv::imwrite(filename_output, segmentation);
+		bool saved = cv::imwrite(filename_output, rgba);
 
 		if (saved)
 			std::cout << "Image " << i << " saved as " << filename_output << std::endl;
