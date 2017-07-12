@@ -10,7 +10,16 @@
 #include <sstream>
 
 // Global variables
-
+static const cv::String keys =
+"{help h usage ? |      | print this message   }"
+"{@image1        |      | image1 for compare   }"
+"{@image2        |      | image2 for compare   }"
+"{@repeat        |1     | number               }"
+"{path           |.     | path to file         }"
+"{fps            | -1.0 | fps for output video }"
+"{N count        |100   | count of objects     }"
+"{ts timestamp   |      | use time stamp       }"
+;
 
 
 static void show_window(const std::string& window_name, const cv::Mat& img)
@@ -25,6 +34,13 @@ static void show_window(const std::string& window_name, const cv::Mat& img)
 
 int main(int argc, char* argv[])
 {
+	//
+	// command line parser
+	//
+	cv::CommandLineParser parser(argc, argv, keys);
+	parser.about("Application name v1.0.0");
+
+
 	int64 start_program_time = cv::getTickCount();
 
 	//check for the input parameter correctness
@@ -42,6 +58,8 @@ int main(int argc, char* argv[])
 	std::vector<cv::String> bg_files, fg_files;
 	cv::glob(bg_path, bg_files, true); // recurse
 	cv::glob(fg_path, fg_files, true); // recurse
+
+	float subtraction_percentage = (argc > 4) ? atof(argv[4]) : 0.1f;
 
 	const uint16_t image_count = std::min(bg_files.size(), fg_files.size());
 

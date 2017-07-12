@@ -13,6 +13,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libraw_dcraw", "libraw_dcra
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "segmentation", "segmentation.vcxproj", "{C4EE9418-E995-4C75-B11A-C706C88FAF3C}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "raw2cv", "raw2cv.vcxproj", "{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -39,6 +41,10 @@ Global
 		{C4EE9418-E995-4C75-B11A-C706C88FAF3C}.Debug|x64.Build.0 = Debug|x64
 		{C4EE9418-E995-4C75-B11A-C706C88FAF3C}.Release|x64.ActiveCfg = Release|x64
 		{C4EE9418-E995-4C75-B11A-C706C88FAF3C}.Release|x64.Build.0 = Release|x64
+		{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}.Debug|x64.ActiveCfg = Debug|x64
+		{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}.Debug|x64.Build.0 = Debug|x64
+		{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}.Release|x64.ActiveCfg = Release|x64
+		{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
