@@ -51,6 +51,10 @@ it under the terms of the one of two licenses as you choose:
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 
+#include <iostream>
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 void usage(const char *prog)
 {
 	printf("dcraw_emu: almost complete dcraw emulator\n");
@@ -180,6 +184,31 @@ void timerprint(const char *msg, const char *filename)
 
 #endif
 
+
+
+void filesystem_check()
+{
+	const char* filename = "../data/sample.cr2";
+	const char* path = "../data/";
+	const char* output_path = "../data/output/";
+	
+	std::cout 
+		<< std::endl
+		<< filename << " is regular file: " << (fs::is_regular_file(filename) ? "YES" : "NO") << std::endl
+		<< path << " is regular file: " << (fs::is_regular_file(path) ? "YES" : "NO") << std::endl
+		<< output_path << " is regular file: " << (fs::is_regular_file(output_path) ? "YES" : "NO") << std::endl;
+
+	std::cout
+		<< std::endl
+		<< filename << " is directory file: " << (fs::is_directory(filename) ? "YES" : "NO") << std::endl
+		<< path << " is directory file: " << (fs::is_directory(path) ? "YES" : "NO") << std::endl
+		<< output_path << " is directory file: " << (fs::is_directory(output_path) ? "YES" : "NO") << std::endl;
+
+	if (!fs::is_directory(output_path))
+	{
+		fs::create_directory(output_path);
+	}
+}
 
 int main(int argc, char *argv[])
 {
