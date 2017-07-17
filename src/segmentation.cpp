@@ -8,17 +8,16 @@
 //C++
 #include <iostream>
 #include <sstream>
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
 
 // Global variables
 static const cv::String keys =
-"{help h usage ? |      | print this message   }"
-"{@image1        |      | image1 for compare   }"
-"{@image2        |      | image2 for compare   }"
-"{@repeat        |1     | number               }"
-"{path           |.     | path to file         }"
-"{fps            | -1.0 | fps for output video }"
-"{N count        |100   | count of objects     }"
-"{ts timestamp   |      | use time stamp       }"
+"{help h usage ?  |      | print this message		 }"
+"{bg background   |      | background image or dir   }"
+"{fg foreground   |      | foreground image or dir   }"
+"{out output      |      | output image or dir		 }"
+"{sub subtraction | 0.1  | subtraction percentage    }"
 ;
 
 
@@ -40,26 +39,49 @@ int main(int argc, char* argv[])
 	cv::CommandLineParser parser(argc, argv, keys);
 	parser.about("Application name v1.0.0");
 
+	cv::String bg = parser.get<cv::String>("bg");
+	cv::String fg = parser.get<cv::String>("fg");
+	cv::String out = parser.get<cv::String>("out");
+
+	const bool out_folder = fs::is_directory(out.c_str());
+
+	std::vector<cv::String> bg_files, fg_files;
+
+	fs::is_directory(bg.c_str()) ? cv::glob(bg, bg_files, true) : bg_files.push_back(bg);
+	fs::is_directory(fg.c_str()) ? cv::glob(fg, fg_files, true) : fg_files.push_back(fg);
+
+	std::string output_folder, 
+				output_filename, 
+				output_extension = ".tif";
+	if (fs::is_directory(out.c_str()))
+	{
+		output_folder = out;
+	}
+	else
+	{
+		fs::path p(out.c_str());
+		output_folder = p.parent_path().string() + '/';
+		fs::create_directory(output_folder);
+		if (p.has_filename())
+			output_filename = p.stem().string();
+		if (p.has_extension())
+			output_extension = p.extension().string();
+		if (output_extension.size() < 3)	// some error ocurred
+			output_extension = ".tif";
+	}
+	
+
+	std::cout << std::endl
+		<< "path      : " << output_folder << std::endl
+		<< "filename  : " << output_filename << std::endl
+		<< "extension : " << output_extension << std::endl
+		<< std::endl;
+
+	float subtraction_percentage = parser.get<float>("sub");;
+
 
 	int64 start_program_time = cv::getTickCount();
 
-	//check for the input parameter correctness
-	if (argc < 3) 
-	{
-		std::cerr << "Usage: app.exe <bg_folder> <fg_folder> <output_folder>" << std::endl;
-		std::cerr << "Abort." << std::endl;
-		return EXIT_FAILURE;
-	}
-
-	cv::String bg_path(argv[1]); 
-	cv::String fg_path(argv[2]);
-	cv::String out_path(argv[3]);
-
-	std::vector<cv::String> bg_files, fg_files;
-	cv::glob(bg_path, bg_files, true); // recurse
-	cv::glob(fg_path, fg_files, true); // recurse
-
-	float subtraction_percentage = (argc > 4) ? atof(argv[4]) : 0.1f;
 
 	const uint16_t image_count = std::min(bg_files.size(), fg_files.size());
 
@@ -73,7 +95,7 @@ int main(int argc, char* argv[])
 		const std::string& filename_fg = fg_files[i];
 
 		std::stringstream ss;
-		ss << out_path << "/out_" << i << ".tif";
+		ss << output_folder << output_filename << '_' << i << output_extension;
 		const std::string filename_output = ss.str();
 
 		std::cout << "Reading input images ..." << std::endl;
@@ -176,6 +198,7 @@ int main(int argc, char* argv[])
 	std::cout 
 		<< "Total time in seconds :  " 
 		<< double(end_program_time - start_program_time) / cv::getTickFrequency() << std::endl;
+
 
 	return EXIT_SUCCESS;
 }

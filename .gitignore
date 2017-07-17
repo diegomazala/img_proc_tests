@@ -1,4 +1,6 @@
-./bin/
-./msvc/.vs/
-./msvc/tmp/
-./msvc/img_proc_tests.VC.db
+bin/
+msvc/.vs/*
+msvc/tmp/
+msvc/img_proc_tests.VC.db
+release/*
+*.opendb
