@@ -15,6 +15,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "segmentation", "segmentatio
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "raw2cv", "raw2cv.vcxproj", "{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "surf", "surf.vcxproj", "{BC97D848-9279-421D-AB52-F0AC7D3C0547}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -45,6 +47,10 @@ Global
 		{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}.Debug|x64.Build.0 = Debug|x64
 		{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}.Release|x64.ActiveCfg = Release|x64
 		{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}.Release|x64.Build.0 = Release|x64
+		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Debug|x64.ActiveCfg = Debug|x64
+		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Debug|x64.Build.0 = Debug|x64
+		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Release|x64.ActiveCfg = Release|x64
+		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
