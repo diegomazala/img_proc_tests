@@ -17,6 +17,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "raw2cv", "raw2cv.vcxproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "surf", "surf.vcxproj", "{BC97D848-9279-421D-AB52-F0AC7D3C0547}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_chart", "color_chart.vcxproj", "{52B9481A-A503-4634-9570-11417E2D75A8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "equalization", "equalization.vcxproj", "{71DBA23A-AC92-49B2-B605-C3A3E7B88353}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -51,6 +55,14 @@ Global
 		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Debug|x64.Build.0 = Debug|x64
 		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Release|x64.ActiveCfg = Release|x64
 		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Release|x64.Build.0 = Release|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.ActiveCfg = Debug|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.Build.0 = Debug|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.ActiveCfg = Release|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.Build.0 = Release|x64
+		{71DBA23A-AC92-49B2-B605-C3A3E7B88353}.Debug|x64.ActiveCfg = Debug|x64
+		{71DBA23A-AC92-49B2-B605-C3A3E7B88353}.Debug|x64.Build.0 = Debug|x64
+		{71DBA23A-AC92-49B2-B605-C3A3E7B88353}.Release|x64.ActiveCfg = Release|x64
+		{71DBA23A-AC92-49B2-B605-C3A3E7B88353}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
