@@ -21,6 +21,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_chart", "color_chart.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "equalization", "equalization.vcxproj", "{71DBA23A-AC92-49B2-B605-C3A3E7B88353}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "solve_ax=b", "solve_ax=b.vcxproj", "{2AE641DB-D0E3-4082-8701-BB566585D11C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_correction", "color_correction.vcxproj", "{8B35B876-1D58-4F1F-BE59-05546DCD46BB}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "curve_fitting", "curve_fitting.vcxproj", "{8A115A16-8D6F-40FB-940D-15B87F51779D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -63,6 +69,18 @@ Global
 		{71DBA23A-AC92-49B2-B605-C3A3E7B88353}.Debug|x64.Build.0 = Debug|x64
 		{71DBA23A-AC92-49B2-B605-C3A3E7B88353}.Release|x64.ActiveCfg = Release|x64
 		{71DBA23A-AC92-49B2-B605-C3A3E7B88353}.Release|x64.Build.0 = Release|x64
+		{2AE641DB-D0E3-4082-8701-BB566585D11C}.Debug|x64.ActiveCfg = Debug|x64
+		{2AE641DB-D0E3-4082-8701-BB566585D11C}.Debug|x64.Build.0 = Debug|x64
+		{2AE641DB-D0E3-4082-8701-BB566585D11C}.Release|x64.ActiveCfg = Release|x64
+		{2AE641DB-D0E3-4082-8701-BB566585D11C}.Release|x64.Build.0 = Release|x64
+		{8B35B876-1D58-4F1F-BE59-05546DCD46BB}.Debug|x64.ActiveCfg = Debug|x64
+		{8B35B876-1D58-4F1F-BE59-05546DCD46BB}.Debug|x64.Build.0 = Debug|x64
+		{8B35B876-1D58-4F1F-BE59-05546DCD46BB}.Release|x64.ActiveCfg = Release|x64
+		{8B35B876-1D58-4F1F-BE59-05546DCD46BB}.Release|x64.Build.0 = Release|x64
+		{8A115A16-8D6F-40FB-940D-15B87F51779D}.Debug|x64.ActiveCfg = Debug|x64
+		{8A115A16-8D6F-40FB-940D-15B87F51779D}.Debug|x64.Build.0 = Debug|x64
+		{8A115A16-8D6F-40FB-940D-15B87F51779D}.Release|x64.ActiveCfg = Release|x64
+		{8A115A16-8D6F-40FB-940D-15B87F51779D}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

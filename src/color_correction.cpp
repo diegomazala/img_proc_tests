@@ -8,6 +8,7 @@
 #include "opencv2/calib3d/calib3d.hpp"
 
 #include "color_correction.h"
+#include "color_fitting.h"
 
 static void show_window(const std::string& window_name, const cv::Mat& img)
 {
@@ -19,7 +20,169 @@ static void show_window(const std::string& window_name, const cv::Mat& img)
 	cv::imshow(window_name, img);
 }
 
-typedef float Type;
+typedef double Type;
+
+void test_with_eigen_per_channel()
+{
+	Eigen::Matrix<Type, 24, 1> A, b;
+	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> x;
+	
+
+	A << 
+	80,
+	164,
+	73,
+	70,
+	99,
+	108,
+	177,
+	43,
+	152,
+	57,
+	149,
+	191,
+	0, 
+	79,
+	130,
+	201,
+	142,
+	3, 
+	209,
+	178,
+	140,
+	95,
+	59,
+	30;
+
+	b << 
+	115,
+	194,
+	98, 
+	87, 
+	133,
+	103,
+	214,
+	80, 
+	193,
+	94, 
+	157,
+	224,
+	56, 
+	70, 
+	175,
+	231,
+	187,
+	8,
+	243,
+	200,
+	160,
+	122,
+	85, 
+	52; 
+
+	x = A.colPivHouseholderQr().solve(b);
+
+	std::cout
+		<< std::fixed << std::endl
+		<< "Transform Matrix : " << std::endl
+		<< x << std::endl
+		<< std::endl;
+
+	std::cout << "Rows/Cols: " << x.rows() << ' ' << x.cols() << std::endl;
+
+	std::cout
+		<< std::endl
+		<< A * x
+		<< std::endl << std::endl;
+
+}
+
+
+
+void test_with_eigen_per_channels()
+{
+	Eigen::Matrix<Type, 24, 3> src_rgb, dst_rgb;
+	
+	Eigen::Matrix<Type, 24, 1> A, b;
+	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> x;
+
+	src_rgb <<
+		80, 60, 68,
+		164, 135, 155,
+		73, 102, 179, 
+		70, 84, 68,
+		99, 107, 200, 
+		108, 173, 198,
+		177, 108, 62, 
+		43, 70, 194,
+		152, 66, 109, 
+		57, 43, 116,
+		149, 177, 89, 
+		191, 145, 61, 
+		0, 45, 171,
+		79, 132, 87,
+		130, 38, 60,
+		201, 185, 61, 
+		142, 62, 169, 
+		3, 109, 181,
+		209, 215, 240,
+		178, 186, 222,
+		140, 150, 191,
+		95, 102, 137, 
+		59, 63, 88,
+		30, 32, 45;
+
+	dst_rgb <<
+		115, 82, 68,
+		194, 150, 130,
+		98, 122, 157,
+		87, 108, 67,
+		133, 128, 177,
+		103, 189, 170,
+		214, 126, 44,
+		80, 91, 166,
+		193, 90, 99,
+		94, 60, 108,
+		157, 188, 64,
+		224, 163, 46,
+		56, 61, 150,
+		70, 148, 73,
+		175, 54, 60,
+		231, 199, 31,
+		187, 86, 149,
+		8, 133, 161,
+		243, 243, 242,
+		200, 200, 200,
+		160, 160, 160,
+		122, 122, 121,
+		85, 85, 85,
+		52, 52, 52;
+
+	for (int i = 0; i < 3; ++i)
+	{
+		std::cout << "-------------- " << i << std::endl;
+		A = src_rgb.col(i);
+		b = dst_rgb.col(i);
+
+		//x = A.colPivHouseholderQr().solve(b);
+		x = A.fullPivLu().solve(b);
+		double relative_error = (A*x - b).norm() / b.norm(); // norm() is L2 norm
+		std::cout << "The relative error is:\n" << relative_error << std::endl;
+
+		std::cout
+			<< std::fixed << std::endl
+			<< "Transform Matrix : " << std::endl
+			<< x << std::endl
+			<< std::endl;
+		std::cout << "Rows/Cols: " << x.rows() << ' ' << x.cols() << std::endl;
+		std::cout
+			<< std::endl
+			<< A * x
+			<< std::endl << std::endl;
+	}
+
+}
+
 
 Eigen::Matrix<Type, 4, 4> test_with_eigen()
 {
@@ -27,7 +190,6 @@ Eigen::Matrix<Type, 4, 4> test_with_eigen()
 	Eigen::Matrix<Type, 3, 24> x;
 
 	std::vector<Eigen::Matrix<Type, 3, 1>> src_rgb, dst_rgb;
-
 
 	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(80, 60, 68));
 	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(164, 135, 155));
@@ -92,19 +254,17 @@ Eigen::Matrix<Type, 4, 4> test_with_eigen()
 		<< transform << std::endl
 		<< std::endl;
 
+	//for (std::size_t i = 0; i < src_rgb.size(); ++i)
+	//{
+	//	const Eigen::Matrix<Type, 4, 1>& v = src_rgb[i].homogeneous();
 
+	//	Eigen::Matrix<Type, 4, 1> tv = transform.matrix() * v;
+	//	tv /= tv.w();
 
-	for (std::size_t i = 0; i < src_rgb.size(); ++i)
-	{
-		const Eigen::Matrix<Type, 4, 1>& v = src_rgb[i].homogeneous();
+	//	// (tv.head<3>());
 
-		Eigen::Matrix<Type, 4, 1> tv = transform.matrix() * v;
-		tv /= tv.w();
-
-		// (tv.head<3>());
-
-		std::cout << (tv.head<3>()).transpose() << std::endl;
-	}
+	//	std::cout << (tv.head<3>()).transpose() << std::endl;
+	//}
 
 	return transform;
 }
@@ -192,14 +352,83 @@ void test_with_opencv()
 
 }
 
+void test_color_fitting()
+{	
+	RgbFitting<Type> rgb_fitting;
+
+	rgb_fitting.source = Eigen::Matrix<Type, 24, 3>();
+	rgb_fitting.source <<
+		80, 60, 68,
+		164, 135, 155,
+		73, 102, 179,
+		70, 84, 68,
+		99, 107, 200,
+		108, 173, 198,
+		177, 108, 62,
+		43, 70, 194,
+		152, 66, 109,
+		57, 43, 116,
+		149, 177, 89,
+		191, 145, 61,
+		0, 45, 171,
+		79, 132, 87,
+		130, 38, 60,
+		201, 185, 61,
+		142, 62, 169,
+		3, 109, 181,
+		209, 215, 240,
+		178, 186, 222,
+		140, 150, 191,
+		95, 102, 137,
+		59, 63, 88,
+		30, 32, 45;
+
+	rgb_fitting.target = Eigen::Matrix<Type, 24, 3>();
+	rgb_fitting.target <<
+		115, 82, 68,
+		194, 150, 130,
+		98, 122, 157,
+		87, 108, 67,
+		133, 128, 177,
+		103, 189, 170,
+		214, 126, 44,
+		80, 91, 166,
+		193, 90, 99,
+		94, 60, 108,
+		157, 188, 64,
+		224, 163, 46,
+		56, 61, 150,
+		70, 148, 73,
+		175, 54, 60,
+		231, 199, 31,
+		187, 86, 149,
+		8, 133, 161,
+		243, 243, 242,
+		200, 200, 200,
+		160, 160, 160,
+		122, 122, 121,
+		85, 85, 85,
+		52, 52, 52;
+
+	
+	rgb_fitting.compute();
+}
+
 // @function main 
 int main(int argc, char** argv)
 {
-	test_with_opencv();
+
+	test_color_fitting();
+	return EXIT_SUCCESS;
+
+	//test_with_eigen_per_channels();
 	//return EXIT_SUCCESS;
 
-	Eigen::Matrix<Type, 4, 4> transform = test_with_eigen();
-	return EXIT_SUCCESS;
+	//test_with_opencv();
+	//return EXIT_SUCCESS;
+
+	//Eigen::Matrix<Type, 4, 4> transform = test_with_eigen();
+	//return EXIT_SUCCESS;
 
 	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
 	cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
