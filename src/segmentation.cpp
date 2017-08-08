@@ -13,11 +13,13 @@ namespace fs = std::experimental::filesystem;
 
 // Global variables
 static const cv::String keys =
-"{help h usage ?  |      | print this message		 }"
-"{bg background   |      | background image or dir   }"
-"{fg foreground   |      | foreground image or dir   }"
-"{out output      |      | output image or dir		 }"
-"{sub subtraction | 0.1  | subtraction percentage    }"
+"{help h usage ?    |      | print this message		 }"
+"{bg background     |      | background image or dir   }"
+"{fg foreground     |      | foreground image or dir   }"
+"{out output        |      | output image or dir		 }"
+"{sub subtraction   | 0.1  | subtraction percentage    }"
+"{m morphological   | 21   | morphological element size    }"
+"{i intermediate    |      | save intermediate files    }"
 ;
 
 
@@ -44,6 +46,7 @@ int main(int argc, char* argv[])
 	cv::String out = parser.get<cv::String>("out");
 
 	const bool out_folder = fs::is_directory(out.c_str());
+	const bool save_intermediate = parser.has("intermediate");
 
 	std::vector<cv::String> bg_files, fg_files;
 
@@ -78,6 +81,7 @@ int main(int argc, char* argv[])
 		<< std::endl;
 
 	float subtraction_percentage = parser.get<float>("sub");;
+	int morphological_kernel_size = parser.get<int>("m");;
 
 
 	int64 start_program_time = cv::getTickCount();
@@ -114,7 +118,6 @@ int main(int argc, char* argv[])
 		}
 
 		std::cout << "Subtracting background ..." << std::endl;
-
 		//
 		// image subtraction
 		//
@@ -126,40 +129,80 @@ int main(int argc, char* argv[])
 			cv::cvtColor(frame_abs_diff, frame_abs_gray, CV_BGR2GRAY);
 		else
 			frame_abs_gray = frame_abs_diff;
-
-		std::cout << "Blurring image ..." << std::endl;
-
-		//
-		// smooth
-		//
-		cv::Mat smooth;
-		cv::medianBlur(frame_abs_gray, smooth, 25);
-
+		if (save_intermediate)
+		{
+			ss.str(std::string());
+			ss.clear();
+			ss << filename_output << "_s0_frame_abs_gray" << output_extension;
+			std::cout << "Saving: " << ss.str() << std::endl;
+			cv::imwrite(ss.str(), frame_abs_gray);
+		}
+				
 		std::cout << "Threshold binary ..." << std::endl;
-
 		//
 		// binary threshold
 		//
 		cv::Mat binary_threshold;
-		const uint8_t bits_per_sample = (smooth.depth() == CV_16U || smooth.depth() == CV_16S) ? 16 : 8;
+		const uint8_t bits_per_sample = (frame_abs_gray.depth() == CV_16U || frame_abs_gray.depth() == CV_16S) ? 16 : 8;
 		const uint32_t max_value = (uint32_t)pow(2, bits_per_sample);
-		cv::threshold(smooth, binary_threshold, float(max_value) * 0.1f, max_value, cv::THRESH_BINARY);
+		cv::threshold(frame_abs_gray, binary_threshold, float(max_value) * 0.1f, max_value, cv::THRESH_BINARY);
+		if (save_intermediate)
+		{
+			ss.str(std::string());
+			ss.clear();
+			ss << filename_output << "_s1_threshold" << output_extension;
+			std::cout << "Saving: " << ss.str() << std::endl;
+			cv::imwrite(ss.str(), binary_threshold);
+		}
+
+		//
+		// morphological filters
+		//
+		cv::Mat erode_img, dilate_img;
+		cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
+			cv::Size(2 * morphological_kernel_size + 1, 2 * morphological_kernel_size + 1),
+			cv::Point(morphological_kernel_size, morphological_kernel_size));
+		cv::dilate(binary_threshold, dilate_img, element);
+		cv::erode(dilate_img, erode_img, element);
+		if (save_intermediate)
+		{
+			ss.str(std::string());
+			ss.clear();
+			ss << filename_output << "_s2_morph_filters" << output_extension;
+			std::cout << "Saving: " << ss.str() << std::endl;
+			cv::imwrite(ss.str(), erode_img);
+		}
+
 
 		std::cout << "Floodfill ..." << std::endl;
-
 		//
 		// Floodfill from point (0, 0)
 		//
-		cv::Mat floodfill = binary_threshold.clone();
+		cv::Mat floodfill = erode_img.clone();
 		cv::floodFill(floodfill, cv::Point(0, 0), cv::Scalar(255));
 		//
 		// Invert floodfilled image
 		cv::Mat floodfill_inv;
 		bitwise_not(floodfill, floodfill_inv);
+		if (save_intermediate)
+		{
+			ss.str(std::string());
+			ss.clear();
+			ss << filename_output << "_s3_floodfill_inv" << output_extension;
+			std::cout << "Saving: " << ss.str() << std::endl;
+			cv::imwrite(ss.str(), floodfill_inv);
+		}
 		//
 		// Combine the two images to get the foreground.
-		cv::Mat floodfill_out = (binary_threshold | floodfill_inv);
-
+		cv::Mat floodfill_out = (erode_img | floodfill_inv);
+		if (save_intermediate)
+		{
+			ss.str(std::string());
+			ss.clear();
+			ss << filename_output << "_s4_combine_floodfill" << output_extension;
+			std::cout << "Saving: " << ss.str() << std::endl;
+			cv::imwrite(ss.str(), floodfill_out);
+		}
 		//
 		// Apply mask to input fg image
 		//
