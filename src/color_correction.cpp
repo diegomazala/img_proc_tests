@@ -20,6 +20,24 @@ static void show_window(const std::string& window_name, const cv::Mat& img)
 	cv::imshow(window_name, img);
 }
 
+static void histogram_equalization(const cv::Mat& input_img, cv::Mat& output_img)
+{
+	std::vector<cv::Mat> channels;
+	cv::Mat img_hist_equalized;
+
+	cv::cvtColor(input_img, img_hist_equalized, CV_BGR2YCrCb); //change the color image from BGR to YCrCb format
+
+	cv::split(img_hist_equalized, channels); //split the image into channels
+
+	cv::equalizeHist(channels[0], channels[0]); //equalize histogram on the 1st channel 
+	cv::equalizeHist(channels[1], channels[1]); //equalize histogram on the 2nd channel 
+	cv::equalizeHist(channels[2], channels[2]); //equalize histogram on the 3rd channel 
+
+	cv::merge(channels, img_hist_equalized); //merge 3 channels including the modified 1st channel into one image
+
+	cv::cvtColor(img_hist_equalized, output_img, CV_YCrCb2BGR); //change the color image from YCrCb to BGR format (to display image properly)
+}
+
 typedef double Type;
 
 void test_with_eigen_per_channel()
@@ -414,7 +432,8 @@ void test_color_fitting(int argc, char** argv)
 	float alpha = rgb_fitting.functorResult(0);
 	float beta = rgb_fitting.functorResult(1);
 
-	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
+	//cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
+	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
 	cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
 
 	std::cout << "Applying color correction..." << std::endl;
@@ -423,7 +442,9 @@ void test_color_fitting(int argc, char** argv)
 
 	std::cout << "Saving image corrected ..." << std::endl;
 
-	imwrite("../data/color_checker/test_out.tif", output_img);
+	std::stringstream ss;
+	ss << argv[1] << "_color_fit.tif";
+	imwrite(ss.str(), output_img);
 }
 
 // @function main 
