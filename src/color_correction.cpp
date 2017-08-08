@@ -352,7 +352,7 @@ void test_with_opencv()
 
 }
 
-void test_color_fitting()
+void test_color_fitting(int argc, char** argv)
 {	
 	RgbFitting<Type> rgb_fitting;
 
@@ -409,16 +409,27 @@ void test_color_fitting()
 		122, 122, 121,
 		85, 85, 85,
 		52, 52, 52;
-
 	
 	rgb_fitting.compute();
+	float alpha = rgb_fitting.functorResult(0);
+	float beta = rgb_fitting.functorResult(1);
+
+	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
+	cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
+
+	std::cout << "Applying color correction..." << std::endl;
+	
+	input_img.convertTo(output_img, input_img.depth(), alpha, beta);
+
+	std::cout << "Saving image corrected ..." << std::endl;
+
+	imwrite("../data/color_checker/test_out.tif", output_img);
 }
 
 // @function main 
 int main(int argc, char** argv)
 {
-
-	test_color_fitting();
+	test_color_fitting(argc, argv);
 	return EXIT_SUCCESS;
 
 	//test_with_eigen_per_channels();

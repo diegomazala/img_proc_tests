@@ -88,19 +88,10 @@ struct RgbFitting
 			functor.target = target.col(i);	// per channel
 			Eigen::LevenbergMarquardt<FittingNumericalDiff> lm(functor);
 			Eigen::LevenbergMarquardtSpace::Status status = lm.minimize(result);
-#if 1
-			//Eigen::LevenbergMarquardtSpace::Status status = lm.minimize(x);
+#if 0
 			std::cout << "status: " << status << std::endl;
-			//std::cout << "info: " << lm.info() << std::endl;
+			std::cout << "info: " << lm.info() << std::endl;
 			std::cout << "x that minimizes the function: " << std::endl << result.transpose() << std::endl;
-			//const auto src_channel = source.col(i);
-			//const auto tgt_channel = target.col(i);
-			//for (int j = 0; j < src_channel.rows(); ++j)
-			//{
-			//	std::cout
-			//		<< std::fixed
-			//		<< src_channel[j] << ' ' << tgt_channel[j] << '\t' << src_channel[j] * result[0] + result[1] << std::endl;
-			//}
 #endif
 			functorResult(i, 0) = result[0];
 			functorResult(i, 1) = result[1];
