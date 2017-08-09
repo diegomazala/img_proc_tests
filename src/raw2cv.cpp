@@ -51,6 +51,8 @@ it under the terms of the one of two licenses as you choose:
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/imgproc.hpp"
 
+#include "raw_cv.h"
+
 #include <iostream>
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
@@ -139,7 +141,7 @@ void usage(const char *prog)
 	exit(1);
 }
 
-static int verbosity = 0;
+static int verbosity = 3;
 int cnt = 0;
 int my_progress_callback(void *d, enum LibRaw_progress p, int iteration, int expected)
 {
@@ -215,97 +217,18 @@ int main(int argc, char *argv[])
 	if (argc == 1)
 		usage(argv[0]);
 
-	LibRaw raw_processor;
-
-
-
-#if 1 // __ORIGINAL_CODE__
-	const char* filename = "../data/sample.cr2";
-	int ret = 0;
 	
-	raw_processor.set_progress_handler(my_progress_callback, (void *)"Sample data passed");
-
-	ret = raw_processor.open_file(filename, 1);
-	if (ret != LIBRAW_SUCCESS)
-		return EXIT_FAILURE;
-
-	if ((ret = raw_processor.unpack()) != LIBRAW_SUCCESS)
-	{
-		fprintf(stderr, "Cannot unpack image: %s\n", libraw_strerror(ret));
-		return EXIT_FAILURE;
-	}
-
-	// Forcing the Libraw to adjust sizes based on the capture device orientation
-	raw_processor.adjust_sizes_info_only();
-
-	// Output 16 bit images
-	raw_processor.imgdata.params.output_bps = 16;
-
-	// Set the gamma curve to Linear
-	raw_processor.imgdata.params.gamm[0] = 1.0;
-	raw_processor.imgdata.params.gamm[1] = 1.0;
-
-	// Disable exposure correction (unless config "raw:auto_bright" == 1)
-	raw_processor.imgdata.params.no_auto_bright =	0;
-	// Use camera white balance if available
-	raw_processor.imgdata.params.use_camera_wb = 1;
-	// Turn off maximum threshold value (unless set to non-zero)
-	raw_processor.imgdata.params.adjust_maximum_thr = 0.0f;
-	// Set camera maximum value 
-	raw_processor.imgdata.params.user_sat = 0;
-
-	// Use embedded color profile. Values mean:
-	// 0: do not use embedded color profile
-	// 1 (default): use embedded color profile (if present) for DNG files
-	//    (always), for other files only if use_camera_wb is set.
-	// 3: use embedded color data (if present) regardless of white
-	//    balance setting.
-	raw_processor.imgdata.params.use_camera_matrix = 1;	
-
-	// By default we use sRGB primaries for simplicity
-	// [0 - 5]  Output colorspace(raw, sRGB, Adobe, Wide, ProPhoto, XYZ)
-	raw_processor.imgdata.params.output_color = 1;
-
-	//raw_processor.imgdata.params.exp_correc = 1; // enable exposure correction
-	//raw_processor.imgdata.params.exp_shift = exposure_value; // set exposure correction
 
 
-	// Interpolation quality
-	// note: LibRaw must be compiled with demosaic pack GPL2 to use demosaic
-	// algorithms 5-9. It must be compiled with demosaic pack GPL3 for
-	// algorithm 10 (AMAzE). If either of these packs are not included, it
-	// will silently use option 3 - AHD.
-	// "linear","VNG","PPG","AHD","DCB","AHD-Mod","AFD","VCD","Mixed","LMMSE","AMaZE","DHT","AAHD",
-	raw_processor.imgdata.params.user_qual = 3;
 
+#if 1	// MY DERIVED CODE
+	Rawcv cv_raw;
+	cv_raw.load("../data/sample.cr2");
+	cv_raw.setDefaultOptions();
+	cv_raw.process();
+	cv_raw.unload();
 
-	if (LIBRAW_SUCCESS != (ret = raw_processor.dcraw_process()))
-	{
-		fprintf(stderr, "Cannot do postpocessing on image: %s\n", libraw_strerror(ret));
-		if (LIBRAW_FATAL_ERROR(ret))
-			return EXIT_FAILURE;
-	}
-
-	//process the image into memory buffer
-	libraw_processed_image_t *image = raw_processor.dcraw_make_mem_image(&ret);
-	if (LIBRAW_SUCCESS != ret)
-	{
-		fprintf(stderr, "Cannot unpack image into buffer\n");
-		return EXIT_FAILURE;
-	}
-	else
-	{
-		//create a Mat object by data obtained from LibRaw
-		cv::Mat cv_image(cv::Size(image->width, image->height), CV_16UC3, image->data, cv::Mat::AUTO_STEP);
-		cv::cvtColor(cv_image, cv_image, CV_RGB2BGR);	//Convert RGB to BGR
-		cv::imwrite("../data/cv_image_basic.tif", cv_image);
-		cv::Mat cv_image_gamma(cv::Size(image->width, image->height), CV_16UC3);
-		cv_image.convertTo(cv_image_gamma, -1, 2.222, 45);
-		cv::imwrite("../data/cv_image_gamma_basic.tif", cv_image_gamma);
-	}
-
-	raw_processor.recycle(); // just for show this call
-#else
+#else	// __ORIGINAL_CODE__
 	int i, arg, c, ret;
 	char opm, opt, *cp, *sp;
 	int use_bigfile = 0, use_timing = 0, use_mem = 0;

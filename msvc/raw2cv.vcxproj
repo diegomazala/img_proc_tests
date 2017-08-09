@@ -12,6 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\raw2cv.cpp" />
+    <ClCompile Include="..\src\raw_cv.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\raw_cv.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2E5FABB8-7D7A-4F8D-BC65-3779D8204D34}</ProjectGuid>
