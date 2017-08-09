@@ -12,7 +12,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\raw2cv.cpp" />
-    <ClCompile Include="..\src\raw_cv.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\raw_cv.h" />
