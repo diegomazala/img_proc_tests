@@ -27,7 +27,7 @@ public:
 
 	Rawcv()
 	{
-		setDefaultOptions();
+		setDefaultParameters();
 		raw_processor.set_progress_handler(rawcv_progress_callback, (void *)" Image data passed");
 	}
 
@@ -38,7 +38,7 @@ public:
 	}
 
 
-	void setDefaultOptions()
+	void setDefaultParameters()
 	{
 		// Forcing the Libraw to adjust sizes based on the capture device orientation
 		raw_processor.adjust_sizes_info_only();

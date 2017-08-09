@@ -217,18 +217,20 @@ int main(int argc, char *argv[])
 	if (argc == 1)
 		usage(argv[0]);
 
-	
-
-
 
 #if 1	// MY DERIVED CODE
 	Rawcv cv_raw;
 	cv_raw.load("../data/sample.cr2");
-	cv_raw.setDefaultOptions();
+	cv_raw.setDefaultParameters();
 	cv_raw.process();
 	cv_raw.unload();
 
 #else	// __ORIGINAL_CODE__
+
+	//
+	// Paramentes: -timing -F -T -4 -W -j -o 1 -a -w -v  ../data/sample.cr2
+	//
+
 	int i, arg, c, ret;
 	char opm, opt, *cp, *sp;
 	int use_bigfile = 0, use_timing = 0, use_mem = 0;

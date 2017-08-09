@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="..\src\segmentation.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\background_subtraction.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{C4EE9418-E995-4C75-B11A-C706C88FAF3C}</ProjectGuid>
     <RootNamespace>segmentation</RootNamespace>
