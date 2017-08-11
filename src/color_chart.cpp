@@ -17,6 +17,7 @@
 // (converted to BGR order for comparison)
 CvScalar colorchecker_srgb[MACBETH_HEIGHT][MACBETH_WIDTH] =
 {
+#if 0
 	{
 		cvScalar(67,81,115),
 		cvScalar(129,149,196),
@@ -49,6 +50,40 @@ CvScalar colorchecker_srgb[MACBETH_HEIGHT][MACBETH_WIDTH] =
 		cvScalar(85,84,83),
 		cvScalar(50,50,50)
 	}
+#else
+	{
+		cvScalar(68,82,115),
+		cvScalar(130,150,194),
+		cvScalar(157,122,98),
+		cvScalar(67,108,87),
+		cvScalar(177,128,133),
+		cvScalar(170,189,103)
+	},
+	{
+		cvScalar(44,126,214),
+		cvScalar(166,91,80),
+		cvScalar(99,90,193),
+		cvScalar(108,60,94),
+		cvScalar(64,188,157),
+		cvScalar(46,163,224)
+	},
+	{
+		cvScalar(150,61,56),
+		cvScalar(73,148,70),
+		cvScalar(60,54,175),
+		cvScalar(31,199,231),
+		cvScalar(149,86,187),
+		cvScalar(161,133,8)
+	},
+	{
+		cvScalar(242,243,243),
+		cvScalar(200,200,200),
+		cvScalar(160,160,160),
+		cvScalar(121,122,122),
+		cvScalar(85,85,85),
+		cvScalar(52,52,52)
+	}
+#endif
 };
 
 double euclidean_distance(CvScalar p_1, CvScalar p_2)
@@ -396,9 +431,23 @@ CvSeq * find_quad(CvSeq * src_contour, CvMemStorage *storage, int min_size)
 IplImage * find_macbeth(const char *img)
 {
 	//IplImage * macbeth_img = cvLoadImage(img, CV_LOAD_IMAGE_ANYCOLOR | CV_LOAD_IMAGE_ANYDEPTH);
-	IplImage * macbeth_img = cvLoadImage(img);
+	IplImage * macbeth_img_input = cvLoadImage(img, CV_LOAD_IMAGE_COLOR);
+	double w = macbeth_img_input->width;
+	double h = macbeth_img_input->height;
 
-	IplImage * macbeth_original = cvCreateImage(cvSize(macbeth_img->width, macbeth_img->height), macbeth_img->depth, macbeth_img->nChannels);
+
+	if (w > 692)
+	{
+		double diff = 692.0 / double(macbeth_img_input->width);
+		w = 692;
+		h = macbeth_img_input->height * diff;
+	}
+
+	IplImage * macbeth_img = cvCreateImage(cvSize(w, h), 8, macbeth_img_input->nChannels);
+	cvResize(macbeth_img_input, macbeth_img);
+	
+
+	IplImage * macbeth_original = cvCreateImage(cvSize(macbeth_img->width, macbeth_img->height), 8, macbeth_img->nChannels);
 	cvCopy(macbeth_img, macbeth_original);
 
 	IplImage * macbeth_split[3];
@@ -613,6 +662,8 @@ IplImage * find_macbeth(const char *img)
 
 			// render the found colorchecker
 			draw_colorchecker(found_colorchecker.values, found_colorchecker.points, macbeth_img, found_colorchecker.size);
+			
+			fprintf(stderr, "\ncolorchecker.info\n");
 
 			// print out the colorchecker info
 			for (int y = 0; y < MACBETH_HEIGHT; y++) {
@@ -620,12 +671,12 @@ IplImage * find_macbeth(const char *img)
 					CvScalar this_value = cvGet2D(found_colorchecker.values, y, x);
 					CvScalar this_point = cvGet2D(found_colorchecker.points, y, x);
 
-					printf("%.0f,%.0f,%.0f,%.0f,%.0f\n",
+					fprintf(stderr, "%.0f,%.0f,%.0f,%.0f,%.0f\n",
 						this_point.val[0], this_point.val[1],
 						this_value.val[2], this_value.val[1], this_value.val[0]);
 				}
 			}
-			printf("%0.f\n%f\n", found_colorchecker.size, found_colorchecker.error);
+			fprintf(stderr, "colorchecker.size: %0.f\ncolorchecker.error: %f\n", found_colorchecker.size, found_colorchecker.error);
 
 		}
 
@@ -649,14 +700,20 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: %s image_file [output_image]\n", argv[0]);
 		return 1;
 	}
-
+	
 	const char *img_file = argv[1];
+
+	char output_file[256];
+	sprintf(output_file, "%s%s", img_file, ".txt");
+	freopen(output_file, "a", stderr);
 
 	IplImage *out = find_macbeth(img_file);
 	if (argc == 3) {
 		cvSaveImage(argv[2], out);
 	}
 	cvReleaseImage(&out);
+
+	cvWaitKey();
 
 	return 0;
 }
