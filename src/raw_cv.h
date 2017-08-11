@@ -37,6 +37,11 @@ public:
 		unload();
 	}
 
+	void setBitsPerSample(int depth)
+	{
+		// Output 8 or 16 bit images
+		raw_processor.imgdata.params.output_bps = (depth == 16 || depth == 8) ? depth : 8;
+	}
 
 	void setDefaultParameters()
 	{
@@ -106,10 +111,10 @@ public:
 			//create a Mat object by data obtained from LibRaw
 			cv_image = cv::Mat(cv::Size(image->width, image->height), CV_16UC3, image->data, cv::Mat::AUTO_STEP);
 			cv::cvtColor(cv_image, cv_image, CV_RGB2BGR);	//Convert RGB to BGR
-															//cv::imwrite("../data/cv_image_raw.tif", cv_image);
-															//cv::Mat cv_image_gamma(cv::Size(image->width, image->height), CV_16UC3);
-															//cv_image.convertTo(cv_image_gamma, -1, 2.222, 45);
-															//cv::imwrite("../data/cv_image_gamma_basic.tif", cv_image_gamma);
+			//cv::imwrite("../data/cv_image_raw.tif", cv_image);
+			//cv::Mat cv_image_gamma(cv::Size(image->width, image->height), CV_16UC3);
+			//cv_image.convertTo(cv_image_gamma, -1, 2.222, 45);
+			//cv::imwrite("../data/cv_image_gamma_basic.tif", cv_image_gamma);
 		}
 		return true;
 	}

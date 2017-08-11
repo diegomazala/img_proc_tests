@@ -1,12 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>-timing -F -T -4 -W -j -o 1 -a -w -v  ../data/Figurante17/raw/neutral/Figurante_CAM11_10101.CR2</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-bg=../data/Figurante17/raw/bg/Figurante_CAM11_10279.CR2 -fg=../data/Figurante17/raw/neutral/Figurante_CAM11_10101.CR2 -out=../data/figurante17/results/Figurante_CAM11_10101.tif -sub=0.1 -m=25 -i</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=%PATH%;..\3rdparty\libraw\lib\$(Configuration)</LocalDebuggerEnvironment>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-timing -F -T -4 -W -j -o 1 -a -w -v  ../data/Figurante17/raw/neutral/Figurante_CAM11_10101.CR2</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-bg=../data/Figurante17/raw/bg/Figurante_CAM11_10279.CR2 -fg=../data/Figurante17/raw/neutral/Figurante_CAM11_10101.CR2 -out=../data/figurante17/results/Figurante_CAM11_10101.tif -sub=0.1 -m=25 -i</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
     <LocalDebuggerEnvironment>PATH=%PATH%;..\3rdparty\libraw\lib\$(Configuration)</LocalDebuggerEnvironment>
   </PropertyGroup>

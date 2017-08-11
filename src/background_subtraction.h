@@ -81,6 +81,8 @@ public:
 		cv::Mat binary_threshold;
 		const uint8_t bits_per_sample = (frame_abs_diff.depth() == CV_16U || frame_abs_diff.depth() == CV_16S) ? 16 : 8;
 		const uint32_t max_value = (uint32_t)pow(2, bits_per_sample);
+		if (bits_per_sample == 16)
+			frame_abs_diff.convertTo(frame_abs_diff, CV_8U, 1.0 / 256.0);
 		cv::threshold(frame_abs_diff, binary_threshold, float(max_value) * 0.1f, max_value, cv::THRESH_BINARY);
 		std::cout << double(cv::getTickCount() - start_time) / cv::getTickFrequency() << std::endl;
 		if (save_intermediate)
