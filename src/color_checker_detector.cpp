@@ -697,19 +697,30 @@ int main(int argc, char *argv[])
 {
 	if (argc < 2)
 	{
-		fprintf(stderr, "Usage: %s image_file [output_image]\n", argv[0]);
+		fprintf(stderr, "Usage: %s <image_file> [output_data_file] [output_image]\n", argv[0]);
 		return 1;
 	}
-	
+
 	const char *img_file = argv[1];
 
 	char output_file[256];
-	sprintf(output_file, "%s%s", img_file, ".txt");
+
+	if (argc > 2)
+	{
+		sprintf(output_file, "%s", argv[2], ".txt");
+	}
+	else
+	{
+		sprintf(output_file, "%s%s", img_file, ".txt");
+	}
+	
 	freopen(output_file, "a", stderr);
 
+
 	IplImage *out = find_macbeth(img_file);
-	if (argc == 3) {
-		cvSaveImage(argv[2], out);
+	if (argc > 3) 
+	{
+		cvSaveImage(argv[3], out);
 	}
 	cvReleaseImage(&out);
 

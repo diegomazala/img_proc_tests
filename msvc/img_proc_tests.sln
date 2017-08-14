@@ -17,11 +17,13 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "raw2cv", "raw2cv.vcxproj", 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "surf", "surf.vcxproj", "{BC97D848-9279-421D-AB52-F0AC7D3C0547}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_chart", "color_chart.vcxproj", "{52B9481A-A503-4634-9570-11417E2D75A8}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_correction", "color_correction.vcxproj", "{8B35B876-1D58-4F1F-BE59-05546DCD46BB}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "janus", "janus.vcxproj", "{CDAF2E1D-5D72-407D-88F6-584A442DE641}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "template_matching", "template_matching.vcxproj", "{4B1302C2-B497-4358-B5AD-CED17701B7F6}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_checker_detector", "color_checker_detector.vcxproj", "{52B9481A-A503-4634-9570-11417E2D75A8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,10 +59,6 @@ Global
 		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Debug|x64.Build.0 = Debug|x64
 		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Release|x64.ActiveCfg = Release|x64
 		{BC97D848-9279-421D-AB52-F0AC7D3C0547}.Release|x64.Build.0 = Release|x64
-		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.ActiveCfg = Debug|x64
-		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.Build.0 = Debug|x64
-		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.ActiveCfg = Release|x64
-		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.Build.0 = Release|x64
 		{8B35B876-1D58-4F1F-BE59-05546DCD46BB}.Debug|x64.ActiveCfg = Debug|x64
 		{8B35B876-1D58-4F1F-BE59-05546DCD46BB}.Debug|x64.Build.0 = Debug|x64
 		{8B35B876-1D58-4F1F-BE59-05546DCD46BB}.Release|x64.ActiveCfg = Release|x64
@@ -69,6 +67,14 @@ Global
 		{CDAF2E1D-5D72-407D-88F6-584A442DE641}.Debug|x64.Build.0 = Debug|x64
 		{CDAF2E1D-5D72-407D-88F6-584A442DE641}.Release|x64.ActiveCfg = Release|x64
 		{CDAF2E1D-5D72-407D-88F6-584A442DE641}.Release|x64.Build.0 = Release|x64
+		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Debug|x64.ActiveCfg = Debug|x64
+		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Debug|x64.Build.0 = Debug|x64
+		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Release|x64.ActiveCfg = Release|x64
+		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Release|x64.Build.0 = Release|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.ActiveCfg = Debug|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.Build.0 = Debug|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.ActiveCfg = Release|x64
+		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
