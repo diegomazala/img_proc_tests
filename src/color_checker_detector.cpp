@@ -244,7 +244,7 @@ ColorChecker find_colorchecker(CvSeq * quads, CvSeq * boxes, CvMemStorage *stora
 		cvSet1D(points, i, cvScalar(box.center.x, box.center.y));
 	}
 	CvBox2D passport_box = cvMinAreaRect2(points, storage);
-	fprintf(stderr, "Box:\n\tCenter: %f,%f\n\tSize: %f,%f\n\tAngle: %f\n", passport_box.center.x, passport_box.center.y, passport_box.size.width, passport_box.size.height, passport_box.angle);
+	fprintf(stdout, "Box:\n\tCenter: %f,%f\n\tSize: %f,%f\n\tAngle: %f\n", passport_box.center.x, passport_box.center.y, passport_box.size.width, passport_box.size.height, passport_box.angle);
 	if (passport_box.angle < 0.0) {
 		passport_box_flipped = true;
 	}
@@ -252,14 +252,14 @@ ColorChecker find_colorchecker(CvSeq * quads, CvSeq * boxes, CvMemStorage *stora
 	cvBoxPoints(passport_box, box_corners);
 	// for(int i = 0; i < 4; i++)
 	// {
-	//   fprintf(stderr,"Box corner %d: %d,%d\n",i,cvPointFrom32f(box_corners[i]).x,cvPointFrom32f(box_corners[i]).y);
+	//   fprintf(stdout,"Box corner %d: %d,%d\n",i,cvPointFrom32f(box_corners[i]).x,cvPointFrom32f(box_corners[i]).y);
 	// }
 
 	// cvBox(passport_box, image, cvScalarAll(128), 10);
 
 	if (euclidean_distance(cvPointFrom32f(box_corners[0]), cvPointFrom32f(box_corners[1])) <
 		euclidean_distance(cvPointFrom32f(box_corners[1]), cvPointFrom32f(box_corners[2]))) {
-		fprintf(stderr, "Box is upright, rotating\n");
+		fprintf(stdout, "Box is upright, rotating\n");
 		rotate_box(box_corners);
 		rotated_box = true && passport_box_flipped;
 	}
@@ -275,8 +275,8 @@ ColorChecker find_colorchecker(CvSeq * quads, CvSeq * boxes, CvMemStorage *stora
 	double horizontal_orientation = box_corners[0].x < box_corners[1].x ? -1 : 1;
 	double vertical_orientation = box_corners[0].y < box_corners[3].y ? -1 : 1;
 
-	fprintf(stderr, "Spacing is %f %f\n", horizontal_spacing, vertical_spacing);
-	fprintf(stderr, "Slope is %f %f\n", horizontal_slope, vertical_slope);
+	fprintf(stdout, "Spacing is %f %f\n", horizontal_spacing, vertical_spacing);
+	fprintf(stdout, "Slope is %f %f\n", horizontal_slope, vertical_slope);
 
 	int average_size = 0;
 	for (int i = 0; i < boxes->total; i++)
@@ -288,7 +288,7 @@ ColorChecker find_colorchecker(CvSeq * quads, CvSeq * boxes, CvMemStorage *stora
 	}
 	average_size /= boxes->total;
 
-	fprintf(stderr, "Average contained rect size is %d\n", average_size);
+	fprintf(stdout, "Average contained rect size is %d\n", average_size);
 
 	CvMat * this_colorchecker = cvCreateMat(MACBETH_HEIGHT, MACBETH_WIDTH, CV_32FC3);
 	CvMat * this_colorchecker_points = cvCreateMat(MACBETH_HEIGHT, MACBETH_WIDTH, CV_32FC2);
@@ -337,8 +337,8 @@ ColorChecker find_colorchecker(CvSeq * quads, CvSeq * boxes, CvMemStorage *stora
 	cvFlip(this_colorchecker, NULL, -1);
 	double orient_2_error = check_colorchecker(this_colorchecker);
 
-	fprintf(stderr, "Orientation 1: %f\n", orient_1_error);
-	fprintf(stderr, "Orientation 2: %f\n", orient_2_error);
+	fprintf(stdout, "Orientation 1: %f\n", orient_1_error);
+	fprintf(stdout, "Orientation 2: %f\n", orient_2_error);
 
 	if (orient_1_error < orient_2_error) {
 		cvFlip(this_colorchecker, NULL, -1);
@@ -435,7 +435,6 @@ IplImage * find_macbeth(const char *img)
 	double w = macbeth_img_input->width;
 	double h = macbeth_img_input->height;
 
-
 	if (w > 692)
 	{
 		double diff = 692.0 / double(macbeth_img_input->width);
@@ -468,7 +467,7 @@ IplImage * find_macbeth(const char *img)
 		int threshold_type = CV_THRESH_BINARY_INV;
 		int block_size = cvRound(
 			MIN(macbeth_img->width, macbeth_img->height)*0.02) | 1;
-		fprintf(stderr, "Using %d as block size\n", block_size);
+		fprintf(stdout, "Using %d as block size\n", block_size);
 
 		double offset = 6;
 
@@ -489,7 +488,7 @@ IplImage * find_macbeth(const char *img)
 		}
 
 		int element_size = (block_size / 10) + 2;
-		fprintf(stderr, "Using %d as element size\n", element_size);
+		fprintf(stdout, "Using %d as element size\n", element_size);
 
 		// do an opening on the threshold image
 		IplConvKernel * element = cvCreateStructuringElementEx(element_size, element_size, element_size / 2, element_size / 2, CV_SHAPE_RECT);
@@ -527,7 +526,7 @@ IplImage * find_macbeth(const char *img)
 						CvBox2D box = cvMinAreaRect2(quad_contour, storage);
 						cvSeqPush(initial_boxes, &box);
 
-						// fprintf(stderr,"Center: %f %f\n", box.center.x, box.center.y);
+						// fprintf(stdout,"Center: %f %f\n", box.center.x, box.center.y);
 
 						double min_distance = MAX_RGB_DISTANCE;
 						CvPoint closest_color_idx = cvPoint(-1, -1);
@@ -543,7 +542,7 @@ IplImage * find_macbeth(const char *img)
 						}
 
 						CvScalar closest_color = colorchecker_srgb[closest_color_idx.y][closest_color_idx.x];
-						// fprintf(stderr,"Closest color: %f %f %f (%d %d)\n",
+						// fprintf(stdout,"Closest color: %f %f %f (%d %d)\n",
 						//     closest_color.val[2],
 						//     closest_color.val[1],
 						//     closest_color.val[0],
@@ -594,9 +593,9 @@ IplImage * find_macbeth(const char *img)
 
 			ColorChecker found_colorchecker;
 
-			fprintf(stderr, "%d initial quads found", initial_quads->total);
+			fprintf(stdout, "%d initial quads found", initial_quads->total);
 			if (count > MACBETH_SQUARES) {
-				fprintf(stderr, " (probably a Passport)\n");
+				fprintf(stdout, " (probably a Passport)\n");
 
 				CvMat* points = cvCreateMat(initial_quads->total, 1, CV_32FC2);
 				CvMat* clusters = cvCreateMat(initial_quads->total, 1, CV_32SC1);
@@ -655,7 +654,7 @@ IplImage * find_macbeth(const char *img)
 				cvReleaseMat(&clusters);
 			}
 			else { // just one colorchecker to test
-				fprintf(stderr, "\n");
+				fprintf(stdout, "\n");
 				found_colorchecker = find_colorchecker(initial_quads, initial_boxes,
 					storage, macbeth_img, macbeth_original);
 			}
@@ -663,20 +662,21 @@ IplImage * find_macbeth(const char *img)
 			// render the found colorchecker
 			draw_colorchecker(found_colorchecker.values, found_colorchecker.points, macbeth_img, found_colorchecker.size);
 			
-			fprintf(stderr, "\ncolorchecker.info\n");
-
+			fprintf(stdout, "\ncolorchecker.info\n");
+			fprintf(stderr, "%d 3", MACBETH_HEIGHT*MACBETH_WIDTH);
 			// print out the colorchecker info
 			for (int y = 0; y < MACBETH_HEIGHT; y++) {
 				for (int x = 0; x < MACBETH_WIDTH; x++) {
 					CvScalar this_value = cvGet2D(found_colorchecker.values, y, x);
 					CvScalar this_point = cvGet2D(found_colorchecker.points, y, x);
 
-					fprintf(stderr, "%.0f,%.0f,%.0f,%.0f,%.0f\n",
-						this_point.val[0], this_point.val[1],
+					//fprintf(stderr, "%.0f %.0f %.0f %.0f %.0f\n",
+					//this_point.val[0], this_point.val[1],
+					fprintf(stderr, "\n%.0f %.0f %.0f",
 						this_value.val[2], this_value.val[1], this_value.val[0]);
 				}
 			}
-			fprintf(stderr, "colorchecker.size: %0.f\ncolorchecker.error: %f\n", found_colorchecker.size, found_colorchecker.error);
+			fprintf(stdout, "colorchecker.size: %0.f\ncolorchecker.error: %f\n", found_colorchecker.size, found_colorchecker.error);
 
 		}
 
@@ -697,24 +697,24 @@ int main(int argc, char *argv[])
 {
 	if (argc < 2)
 	{
-		fprintf(stderr, "Usage: %s <image_file> [output_data_file] [output_image]\n", argv[0]);
+		fprintf(stdout, "Usage: %s <image_file> [output_data_file] [output_image]\n", argv[0]);
 		return 1;
 	}
 
 	const char *img_file = argv[1];
 
-	char output_file[256];
+	char output_mat_file[256];
 
 	if (argc > 2)
 	{
-		sprintf(output_file, "%s", argv[2], ".txt");
+		sprintf(output_mat_file, "%s", argv[2]);
 	}
 	else
 	{
-		sprintf(output_file, "%s%s", img_file, ".txt");
+		sprintf(output_mat_file, "%s%s", img_file, ".mat");
 	}
 	
-	freopen(output_file, "a", stderr);
+	freopen(output_mat_file, "w+", stderr);
 
 
 	IplImage *out = find_macbeth(img_file);

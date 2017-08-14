@@ -1,9 +1,12 @@
 #include <stdio.h>
 #include <iostream>
+#include <sstream>
+#include <string>
 #include <opencv2/opencv.hpp>
 #include "opencv2/core.hpp"
 #include "opencv2/features2d.hpp"
 #include "opencv2/xfeatures2d.hpp"
+#include "opencv2/xphoto.hpp"
 #include "opencv2/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
 
@@ -20,552 +23,219 @@ static void show_window(const std::string& window_name, const cv::Mat& img)
 	cv::imshow(window_name, img);
 }
 
-static void histogram_equalization(const cv::Mat& input_img, cv::Mat& output_img)
+static void equalization_per_channel(const cv::Mat& input_img, cv::Mat& output_img, double r, double g, double b)
 {
 	std::vector<cv::Mat> channels;
-	cv::Mat img_hist_equalized;
-
-	cv::cvtColor(input_img, img_hist_equalized, CV_BGR2YCrCb); //change the color image from BGR to YCrCb format
-
-	cv::split(img_hist_equalized, channels); //split the image into channels
-
-	cv::equalizeHist(channels[0], channels[0]); //equalize histogram on the 1st channel 
-	cv::equalizeHist(channels[1], channels[1]); //equalize histogram on the 2nd channel 
-	cv::equalizeHist(channels[2], channels[2]); //equalize histogram on the 3rd channel 
-
-	cv::merge(channels, img_hist_equalized); //merge 3 channels including the modified 1st channel into one image
-
-	cv::cvtColor(img_hist_equalized, output_img, CV_YCrCb2BGR); //change the color image from YCrCb to BGR format (to display image properly)
+	cv::split(input_img, channels); //split the image into channels
+	cv::normalize(channels[0], channels[0], 0, 65535.0 * b, cv::NORM_MINMAX, CV_16U);
+	cv::normalize(channels[1], channels[1], 0, 65535.0 * g, cv::NORM_MINMAX, CV_16U);
+	cv::normalize(channels[2], channels[2], 0, 65535.0 * r, cv::NORM_MINMAX, CV_16U);
+	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
 }
 
 typedef double Type;
 
-void test_with_eigen_per_channel()
+
+static Eigen::Matrix<Type, 24, 3> color_checker_matrix()
 {
-	Eigen::Matrix<Type, 24, 1> A, b;
-	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> x;
-	
+	Eigen::Matrix<Type, 24, 3> rgb_matrix;
+	rgb_matrix <<
+	115, 82, 68,
+	194, 150, 130,
+	98, 122, 157,
+	87, 108, 67,
+	133, 128, 177,
+	103, 189, 170,
 
-	A << 
-	80,
-	164,
-	73,
-	70,
-	99,
-	108,
-	177,
-	43,
-	152,
-	57,
-	149,
-	191,
-	0, 
-	79,
-	130,
-	201,
-	142,
-	3, 
-	209,
-	178,
-	140,
-	95,
-	59,
-	30;
+	214, 126, 44,
+	80, 91, 166,
+	193, 90, 99,
+	94, 60, 108,
+	157, 188, 64,
+	224, 163, 46,
 
-	b << 
-	115,
-	194,
-	98, 
-	87, 
-	133,
-	103,
-	214,
-	80, 
-	193,
-	94, 
-	157,
-	224,
-	56, 
-	70, 
-	175,
-	231,
-	187,
-	8,
-	243,
-	200,
-	160,
-	122,
-	85, 
-	52; 
+	56, 61, 150,
+	70, 148, 73,
+	175, 54, 60,
+	231, 199, 31,
+	187, 86, 149,
+	8, 133, 161,
 
-	x = A.colPivHouseholderQr().solve(b);
+	243, 243, 242,
+	200, 200, 200,
+	160, 160, 160,
+	122, 122, 121,
+	85, 85, 85,
+	52, 52, 52;
+	return rgb_matrix;
+}
 
-	std::cout
-		<< std::fixed << std::endl
-		<< "Transform Matrix : " << std::endl
-		<< x << std::endl
-		<< std::endl;
+bool matrix_from_file(const std::string& filename, Eigen::Matrix<Type, Eigen::Dynamic, 3>& mat)
+{
+	std::ifstream infile(filename);
+	if (infile.is_open())
+	{
+		int rows, cols;
+		infile >> rows >> cols;
 
-	std::cout << "Rows/Cols: " << x.rows() << ' ' << x.cols() << std::endl;
+		if (rows != mat.rows() || cols != mat.cols())
+		{
+			std::cerr << "Error: Could not read rows and cols from matrix file. Abort." << std::endl;
+			return false;
+		}
 
-	std::cout
-		<< std::endl
-		<< A * x
-		<< std::endl << std::endl;
+		for (int i = 0; i < mat.rows(); ++i)
+		{
+			infile >> mat(i, 0) >> mat(i, 1) >> mat(i, 2);
+		}
+	}
 
+	return true;
 }
 
 
-
-void test_with_eigen_per_channels()
+static void transform_image_per_channel(
+	cv::Mat& output_img, 
+	const cv::Mat& input_img, 
+	const Eigen::Matrix<Type, 3, 2>& alpha_beta)
 {
-	Eigen::Matrix<Type, 24, 3> src_rgb, dst_rgb;
-	
-	Eigen::Matrix<Type, 24, 1> A, b;
-	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> x;
-
-	src_rgb <<
-		80, 60, 68,
-		164, 135, 155,
-		73, 102, 179, 
-		70, 84, 68,
-		99, 107, 200, 
-		108, 173, 198,
-		177, 108, 62, 
-		43, 70, 194,
-		152, 66, 109, 
-		57, 43, 116,
-		149, 177, 89, 
-		191, 145, 61, 
-		0, 45, 171,
-		79, 132, 87,
-		130, 38, 60,
-		201, 185, 61, 
-		142, 62, 169, 
-		3, 109, 181,
-		209, 215, 240,
-		178, 186, 222,
-		140, 150, 191,
-		95, 102, 137, 
-		59, 63, 88,
-		30, 32, 45;
-
-	dst_rgb <<
-		115, 82, 68,
-		194, 150, 130,
-		98, 122, 157,
-		87, 108, 67,
-		133, 128, 177,
-		103, 189, 170,
-		214, 126, 44,
-		80, 91, 166,
-		193, 90, 99,
-		94, 60, 108,
-		157, 188, 64,
-		224, 163, 46,
-		56, 61, 150,
-		70, 148, 73,
-		175, 54, 60,
-		231, 199, 31,
-		187, 86, 149,
-		8, 133, 161,
-		243, 243, 242,
-		200, 200, 200,
-		160, 160, 160,
-		122, 122, 121,
-		85, 85, 85,
-		52, 52, 52;
+	std::vector<cv::Mat> channels;
+	cv::split(input_img, channels); //split the image into channels
 
 	for (int i = 0; i < 3; ++i)
 	{
-		std::cout << "-------------- " << i << std::endl;
-		A = src_rgb.col(i);
-		b = dst_rgb.col(i);
-
-		//x = A.colPivHouseholderQr().solve(b);
-		x = A.fullPivLu().solve(b);
-		double relative_error = (A*x - b).norm() / b.norm(); // norm() is L2 norm
-		std::cout << "The relative error is:\n" << relative_error << std::endl;
-
-		std::cout
-			<< std::fixed << std::endl
-			<< "Transform Matrix : " << std::endl
-			<< x << std::endl
-			<< std::endl;
-		std::cout << "Rows/Cols: " << x.rows() << ' ' << x.cols() << std::endl;
-		std::cout
-			<< std::endl
-			<< A * x
-			<< std::endl << std::endl;
+		channels[i].convertTo(channels[i], input_img.depth(), alpha_beta(2 - i, 0), alpha_beta(2 - i, 1));
 	}
 
+	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
 }
 
 
-Eigen::Matrix<Type, 4, 4> test_with_eigen()
+bool test_color_fitting_from_file(int argc, char** argv)
 {
-	Eigen::Matrix<Type, 24, 3> a, b;
-	Eigen::Matrix<Type, 3, 24> x;
-
-	std::vector<Eigen::Matrix<Type, 3, 1>> src_rgb, dst_rgb;
-
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(80, 60, 68));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(164, 135, 155));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(73, 102, 179));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(70, 84, 68));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(99, 107, 200));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(108, 173, 198));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(177, 108, 62));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(43, 70, 194));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(152, 66, 109));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(57, 43, 116));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(149, 177, 89));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(191, 145, 61));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(0, 45, 171));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(79, 132, 87));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(130, 38, 60));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(201, 185, 61));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(142, 62, 169));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(3, 109, 181));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(209, 215, 240));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(178, 186, 222));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(140, 150, 191));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(95, 102, 137));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(59, 63, 88));
-	src_rgb.push_back(Eigen::Matrix<Type, 3, 1>(30, 32, 45));
-
-
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(115, 82, 68));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(194, 150, 130));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(98, 122, 157));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(87, 108, 67));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(133, 128, 177));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(103, 189, 170));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(214, 126, 44));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(80, 91, 166));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(193, 90, 99));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(94, 60, 108));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(157, 188, 64));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(224, 163, 46));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(56, 61, 150));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(70, 148, 73));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(175, 54, 60));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(231, 199, 31));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(187, 86, 149));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(8, 133, 161));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(243, 243, 242));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(200, 200, 200));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(160, 160, 160));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(122, 122, 121));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(85, 85, 85));
-	dst_rgb.push_back(Eigen::Matrix<Type, 3, 1>(52, 52, 52));
-
-	//
-	// Computing rigid transformation
-	// 
-	Eigen::Matrix<Type, 4, 4> transform;
-	compute_rigid_transformation(src_rgb, dst_rgb, transform);
-
-	std::cout
-		<< std::fixed << std::endl
-		<< "Transform Matrix : " << std::endl
-		<< transform << std::endl
-		<< std::endl;
-
-	//for (std::size_t i = 0; i < src_rgb.size(); ++i)
-	//{
-	//	const Eigen::Matrix<Type, 4, 1>& v = src_rgb[i].homogeneous();
-
-	//	Eigen::Matrix<Type, 4, 1> tv = transform.matrix() * v;
-	//	tv /= tv.w();
-
-	//	// (tv.head<3>());
-
-	//	std::cout << (tv.head<3>()).transpose() << std::endl;
-	//}
-
-	return transform;
-}
-
-
-void test_with_opencv()
-{
-	float m3x3[3][4] = {
-		{ 0.998631f, -0.051762f,  0.007566f, 31.907135, },
-		{ 0.051362f,  0.997627f,  0.045840f, 7.402893, },
-		{ -0.009920f, -0.045389f,  0.998920f, -9.333534 } };
-	cv::Mat R(3, 4, CV_32FC1, m3x3);
-
-	//float m3x3[3][3] = {
-	//	{ 0.998631f, -0.051762f,  0.007566f, },
-	//	{ 0.051362f,  0.997627f,  0.045840f, },
-	//	{ -0.009920f, -0.045389f,  0.998920f } };
-	//cv::Mat R(3, 3, CV_32FC1, m3x3);
-
-	float src_rgb[24][3] = {
-	{80, 60, 68,},
-	{164, 135, 155,},
-	{73, 102, 179,},
-	{70, 84, 68,},
-	{99, 107, 200,},
-	{108, 173, 198,},
-	{177, 108, 62,},
-	{43, 70, 194,},
-	{152, 66, 109,},
-	{57, 43, 116,},
-	{149, 177, 89,},
-	{191, 145, 61,},
-	{0, 45, 171,},
-	{79, 132, 87,},
-	{130, 38, 60,},
-	{201, 185, 61,},
-	{142, 62, 169,},
-	{3, 109, 181,},
-	{209, 215, 240,},
-	{178, 186, 222,},
-	{140, 150, 191,},
-	{95, 102, 137,},
-	{59, 63, 88,},
-	{30, 32, 45,} };
-
-	float dst_rgb[24][3] = {
-	{115, 82, 68,},
-	{194, 150, 130,},
-	{98, 122, 157,},
-	{87, 108, 67,},
-	{133, 128, 177,},
-	{103, 189, 170,},
-	{214, 126, 44,},
-	{80, 91, 166,},
-	{193, 90, 99,},
-	{94, 60, 108,},
-	{157, 188, 64,},
-	{224, 163, 46,},
-	{56, 61, 150,},
-	{70, 148, 73,},
-	{175, 54, 60,},
-	{231, 199, 31,},
-	{187, 86, 149,},
-	{8, 133, 161,},
-	{243, 243, 242,},
-	{200, 200, 200,},
-	{160, 160, 160,},
-	{122, 122, 121,},
-	{85, 85, 85,},
-	{52, 52, 52} };
-
-	cv::Mat src_img(6, 4, CV_32FC3, src_rgb);
-	cv::Mat dst_img(6, 4, CV_32FC3, dst_rgb);
-	cv::Mat dst_img_computed = cv::Mat::zeros(6, 4, CV_32FC3);
-
-	cv::transform(src_img, dst_img_computed, R);
-
-	//std::cout << dst_img_computed << std::endl;
-
-	for (int i = 0; i < dst_img_computed.rows * dst_img_computed.cols; ++i)
-	{
-		const cv::Vec3f pixel = dst_img_computed.at<cv::Vec3f>(i);
-		std::cout << pixel[0] << ' ' << pixel[1] << ' ' << pixel[2] << std::endl;
-	}
-
-}
-
-void test_color_fitting(int argc, char** argv)
-{	
 	RgbFitting<Type> rgb_fitting;
 
-	rgb_fitting.source = Eigen::Matrix<Type, 24, 3>();
-	rgb_fitting.source <<
-		80, 60, 68,
-		164, 135, 155,
-		73, 102, 179,
-		70, 84, 68,
-		99, 107, 200,
-		108, 173, 198,
-		177, 108, 62,
-		43, 70, 194,
-		152, 66, 109,
-		57, 43, 116,
-		149, 177, 89,
-		191, 145, 61,
-		0, 45, 171,
-		79, 132, 87,
-		130, 38, 60,
-		201, 185, 61,
-		142, 62, 169,
-		3, 109, 181,
-		209, 215, 240,
-		178, 186, 222,
-		140, 150, 191,
-		95, 102, 137,
-		59, 63, 88,
-		30, 32, 45;
-
-	rgb_fitting.target = Eigen::Matrix<Type, 24, 3>();
-	rgb_fitting.target <<
-		115, 82, 68,
-		194, 150, 130,
-		98, 122, 157,
-		87, 108, 67,
-		133, 128, 177,
-		103, 189, 170,
-
-		214, 126, 44,
-		80, 91, 166,
-		193, 90, 99,
-		94, 60, 108,
-		157, 188, 64,
-		224, 163, 46,
-
-		56, 61, 150,
-		70, 148, 73,
-		175, 54, 60,
-		231, 199, 31,
-		187, 86, 149,
-		8, 133, 161,
-
-		243, 243, 242,
-		200, 200, 200,
-		160, 160, 160,
-		122, 122, 121,
-		85, 85, 85,
-		52, 52, 52;
-	
-	rgb_fitting.compute();
-	float alpha = rgb_fitting.functorResult(0);
-	float beta = rgb_fitting.functorResult(1);
-
-	//cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
-	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
 	cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
+	
+
+	rgb_fitting.source = Eigen::Matrix<Type, 24, 3>();
+	matrix_from_file(argv[2], rgb_fitting.source);
+
+	if (argc > 3)
+	{
+		rgb_fitting.target = Eigen::Matrix<Type, 24, 3>();
+		matrix_from_file(argv[3], rgb_fitting.target);
+	}
+	else
+	{
+		rgb_fitting.target = color_checker_matrix();
+	}
+
+	rgb_fitting.compute();
 
 	std::cout << "Applying color correction..." << std::endl;
-	
-	input_img.convertTo(output_img, input_img.depth(), alpha, beta);
 
-	std::cout << "Saving image corrected ..." << std::endl;
+	transform_image_per_channel(output_img, input_img, rgb_fitting.functorResult);
 
-	std::stringstream ss;
-	ss << argv[1] << "_color_fit.tif";
-	imwrite(ss.str(), output_img);
+	if (argc > 4)
+	{
+		std::stringstream ss;
+
+		std::cout << "Saving image corrected ..." << std::endl;
+		imwrite(argv[4], output_img);
+
+		double shift_red = rgb_fitting.target(21, 0) / rgb_fitting.source(21, 0);
+		double shift_green = rgb_fitting.target(21, 1) / rgb_fitting.source(21, 1);
+		double shift_blue = rgb_fitting.target(21, 2) / rgb_fitting.source(21, 2);
+
+		cv::Mat histog_img = cv::Mat(input_img.size(), input_img.type());
+		equalization_per_channel(output_img, histog_img, shift_red, shift_green, shift_blue);
+		ss.str(std::string());
+		ss.clear();
+		ss << argv[4] << "_equalized.tif";
+		imwrite(ss.str(), histog_img);
+	}
+	return true;
 }
+
+
+
+// Global variables
+static const cv::String keys =
+"{help h usage ?  |      | in_img out_img src_rgb dst_rgb }"
+"{@image1         |      | input image                    }"
+"{@image2         |      | output image                   }"
+"{@rgb_matrix_src |      | rgb matrix source              }"
+"{@rgb_matrix_dst |      | rgb matrix target              }"
+"{eq equalization |      | use equalization               }"
+;
 
 // @function main 
 int main(int argc, char** argv)
 {
-	test_color_fitting(argc, argv);
-	return EXIT_SUCCESS;
+	cv::CommandLineParser parser(argc, argv, keys);
+	parser.about("Color correction");
+	if (parser.has("help"))
+	{
+		parser.printMessage();
+		return EXIT_FAILURE;
+	}
 
-	//test_with_eigen_per_channels();
-	//return EXIT_SUCCESS;
+	bool do_equalization = parser.has("equalization");
+	cv::String input_img_file = parser.get<cv::String>(0);
+	cv::String output_img_file = parser.get<cv::String>(1);
+	cv::String rgb_mat_src_file = parser.get<cv::String>(2);
+	cv::String rgb_mat_dst_file = parser.get<cv::String>(3);
 
-	//test_with_opencv();
-	//return EXIT_SUCCESS;
 
-	//Eigen::Matrix<Type, 4, 4> transform = test_with_eigen();
-	//return EXIT_SUCCESS;
+	RgbFitting<Type> rgb_fitting;
 
-	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
+	cv::Mat input_img = cv::imread(input_img_file, CV_LOAD_IMAGE_UNCHANGED);
 	cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
 
+	rgb_fitting.source = Eigen::Matrix<Type, 24, 3>();
+	matrix_from_file(rgb_mat_src_file, rgb_fitting.source);
 
+	if (!rgb_mat_dst_file.empty())
+	{
+		rgb_fitting.target = Eigen::Matrix<Type, 24, 3>();
+		matrix_from_file(rgb_mat_dst_file, rgb_fitting.target);
+	}
+	else
+	{
+		rgb_fitting.target = color_checker_matrix();
+	}
 
+	rgb_fitting.compute();
 
+	std::cout << "Applying color correction..." << std::endl;
 
-	float m3x3[3][4] = {
-		{0.998631f, -0.051762f,  0.007566f, 31.907135, },
-		{0.051362f,  0.997627f,  0.045840f, 7.402893, },
-		{-0.009920f, -0.045389f,  0.998920f, -9.333534}};
+	transform_image_per_channel(output_img, input_img, rgb_fitting.functorResult);
 
-	//31.907135  7.402893 - 9.333534
+	if (argc > 4)
+	{
+		std::stringstream ss;
 
-	cv::Mat R(3, 4, CV_32FC1, m3x3);
+		std::cout << "Saving image corrected ..." << std::endl;
 
-	//float m3[3] = { 80, 60, 68};
-	//cv::Mat src(1, 3, CV_32FC1, m3);
-	//cv::Mat dst = cv::Mat::zeros(3, 1, CV_32FC1);
+		if (do_equalization)
+		{
+			// using a specific gray block in color checkerto shift rgb 
+			double shift_red = rgb_fitting.target(21, 0) / rgb_fitting.source(21, 0);
+			double shift_green = rgb_fitting.target(21, 1) / rgb_fitting.source(21, 1);
+			double shift_blue = rgb_fitting.target(21, 2) / rgb_fitting.source(21, 2);
 
-	//const cv::Vec3b pixel_src(80, 60, 68);
-	//const cv::Vec3b pixel_dst(115, 82, 68);
+			cv::Mat histog_img = cv::Mat(input_img.size(), input_img.type());
+			equalization_per_channel(output_img, histog_img, shift_red, shift_green, shift_blue);
+			imwrite(output_img_file, histog_img);
+		}
+		else
+		{
+			imwrite(output_img_file, output_img);
+		}
+	}
 
-	cv::transform(input_img, output_img, R.t());
-
-	//std::cout << src << std::endl;
-	//std::cout << dst << std::endl;
-
-
-
-	//std::cout << "------------" << std::endl;
-
-	//for (int i = 0; i < input_img.rows * input_img.cols; ++i)
-	//{
-	//	const cv::Vec3w pixel = input_img.at<cv::Vec3w>(i);
-	//	const Eigen::Matrix<Type, 4, 1> v(pixel[0], pixel[1], pixel[2], 1);
-
-	//	Eigen::Matrix<Type, 4, 1> tv = transform.matrix() * v;
-	//	tv /= tv.w();
-
-	//	//std::cout << (tv.head<3>()).transpose().cast<int>() << std::endl;
-
-	//	output_img.at<cv::Vec3w>(i) = cv::Vec3w(tv[0], tv[1], tv[2]);
-	//}
-
-	imwrite("../data/color_checker/test_out.tif", output_img);
 
 	return EXIT_SUCCESS;
 }
-
-
-#if 0
-a <<
-80, 60, 68,
-164, 135, 155,
-73, 102, 179,
-70, 84, 68,
-99, 107, 200,
-108, 173, 198,
-177, 108, 62,
-43, 70, 194,
-152, 66, 109,
-57, 43, 116,
-149, 177, 89,
-191, 145, 61,
-0, 45, 171,
-79, 132, 87,
-130, 38, 60,
-201, 185, 61,
-142, 62, 169,
-3, 109, 181,
-209, 215, 240,
-178, 186, 222,
-140, 150, 191,
-95, 102, 137,
-59, 63, 88,
-30, 32, 45;
-
-b <<
-115, 82, 68,
-194, 150, 130,
-98, 122, 157,
-87, 108, 67,
-133, 128, 177,
-103, 189, 170,
-214, 126, 44,
-80, 91, 166,
-193, 90, 99,
-94, 60, 108,
-157, 188, 64,
-224, 163, 46,
-56, 61, 150,
-70, 148, 73,
-175, 54, 60,
-231, 199, 31,
-187, 86, 149,
-8, 133, 161,
-243, 243, 242,
-200, 200, 200,
-160, 160, 160,
-122, 122, 121,
-85, 85, 85,
-52, 52, 52;
-#endif
