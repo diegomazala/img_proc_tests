@@ -20,7 +20,6 @@ static const cv::String keys =
 "{bg background     |      | background image or dir   }"
 "{fg foreground     |      | foreground image or dir   }"
 "{out output        |      | output image or dir		 }"
-"{sub subtraction   | 0.1  | subtraction percentage    }"
 "{m morphological   | 21   | morphological element size    }"
 "{i intermediate    |      | save intermediate files    }"
 ;
@@ -84,9 +83,7 @@ int main(int argc, char* argv[])
 		<< "extension : " << output_extension << std::endl
 		<< std::endl;
 
-	float subtraction_percentage = parser.get<float>("sub");;
 	int morphological_kernel_size = parser.get<int>("m");;
-
 
 	int64 start_program_time = cv::getTickCount();
 
@@ -123,12 +120,14 @@ int main(int argc, char* argv[])
 		}
 
 		BackgroundSubtraction bg_sub;
+		bg_sub.saveIntermediateFiles(save_intermediate);
+		bg_sub.setMorphologicalKernelSize(morphological_kernel_size);
 		bg_sub.setResultFileName(output_folder, output_basename, output_extension);
 		bg_sub.process(frame_bg, frame_fg);
 		cv::Mat rgba;
 		bg_sub.compose(frame_fg_rgb, rgba);
 
-
+		
 		//
 		// Time prints
 		//

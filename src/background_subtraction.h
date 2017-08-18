@@ -48,10 +48,23 @@ public:
 		output_extension = file_extension;
 	}
 
+	void saveIntermediateFiles(bool save)
+	{
+		save_intermediate = save;
+	}
+
+	void setMorphologicalKernelSize(int kernel_size)
+	{
+		morphological_kernel_size = kernel_size;
+	}
+
 
 	void process(const cv::Mat& frame_bg_gray, const cv::Mat& frame_fg_gray)
 	{
 		std::stringstream ss;
+
+		const uint8_t bits_per_sample = (frame_bg_gray.depth() == CV_16U || frame_bg_gray.depth() == CV_16S) ? 16 : 8;
+		const uint32_t max_value = (uint32_t)pow(2, bits_per_sample);
 
 		//
 		// image subtraction
@@ -59,7 +72,8 @@ public:
 		std::cout << "Subtracting background ... ";
 		int64 start_time = cv::getTickCount();
 		cv::Mat frame_abs_diff;
-		cv::absdiff(frame_bg_gray, frame_fg_gray, frame_abs_diff);
+		cv::absdiff(frame_fg_gray, frame_bg_gray, frame_abs_diff);
+		frame_abs_diff.convertTo(frame_abs_diff, -1, 2, 0);
 		std::cout << double(cv::getTickCount() - start_time) / cv::getTickFrequency() << std::endl;
 		//
 		if (save_intermediate)
@@ -69,6 +83,13 @@ public:
 			ss << output_folder << output_filename << "_s0_abs_subtraction" << output_extension;
 			std::cout << "Saving: " << ss.str() << std::endl;
 			cv::imwrite(ss.str(), frame_abs_diff);
+
+			//ss.str(std::string());
+			//ss.clear();
+			//ss << output_folder << output_filename << "_s00_abs_subtraction" << output_extension;
+			//frame_abs_diff.convertTo(frame_abs_diff, -1, 2, 0);
+			//cv::imwrite(ss.str(), frame_abs_diff);
+
 		}
 
 
@@ -79,22 +100,18 @@ public:
 		std::cout << "Binary threshold ...       ";
 		start_time = cv::getTickCount();
 		cv::Mat binary_threshold;
-		const uint8_t bits_per_sample = (frame_abs_diff.depth() == CV_16U || frame_abs_diff.depth() == CV_16S) ? 16 : 8;
-		const uint32_t max_value = (uint32_t)pow(2, bits_per_sample);
 		if (bits_per_sample == 16)
 			frame_abs_diff.convertTo(frame_abs_diff, CV_8U, 1.0 / 256.0);
 		cv::threshold(frame_abs_diff, binary_threshold, float(max_value) * 0.1f, max_value, cv::THRESH_BINARY);
 		std::cout << double(cv::getTickCount() - start_time) / cv::getTickFrequency() << std::endl;
-		if (save_intermediate)
-		{
-			ss.str(std::string());
-			ss.clear();
-			ss << output_folder << output_filename << "_s1_binary_threshold" << output_extension;
-			std::cout << "Saving: " << ss.str() << std::endl;
-			cv::imwrite(ss.str(), binary_threshold);
-		}
-
-
+		//if (save_intermediate)
+		//{
+		//	ss.str(std::string());
+		//	ss.clear();
+		//	ss << output_folder << output_filename << "_s1_binary_threshold" << output_extension;
+		//	std::cout << "Saving: " << ss.str() << std::endl;
+		//	cv::imwrite(ss.str(), binary_threshold);
+		//}
 
 
 		//
@@ -127,20 +144,21 @@ public:
 		start_time = cv::getTickCount();
 		cv::Mat floodfill = erode_img.clone();
 		cv::floodFill(floodfill, cv::Point(0, 0), cv::Scalar(255));
+		cv::floodFill(floodfill, cv::Point(floodfill.cols / 2 , floodfill.rows - 1), cv::Scalar(255));
 		//
 		// Invert floodfilled image
 		cv::Mat floodfill_inv;
 		bitwise_not(floodfill, floodfill_inv);
 		std::cout << double(cv::getTickCount() - start_time) / cv::getTickFrequency() << std::endl;
 		//
-		if (save_intermediate)
-		{
-			ss.str(std::string());
-			ss.clear();
-			ss << output_folder << output_filename << "_s3_floodfill" << output_extension;
-			std::cout << "Saving : " << ss.str() << std::endl;
-			cv::imwrite(ss.str(), floodfill_inv);
-		}
+		//if (save_intermediate)
+		//{
+		//	ss.str(std::string());
+		//	ss.clear();
+		//	ss << output_folder << output_filename << "_s3_floodfill" << output_extension;
+		//	std::cout << "Saving : " << ss.str() << std::endl;
+		//	cv::imwrite(ss.str(), floodfill_inv);
+		//}
 
 
 
@@ -150,6 +168,7 @@ public:
 		std::cout << "Computing mask ...         ";
 		start_time = cv::getTickCount();
 		result_mask = (erode_img | floodfill_inv);
+		
 		std::cout << double(cv::getTickCount() - start_time) / cv::getTickFrequency() << std::endl;
 		if (save_result)
 		{
@@ -158,6 +177,7 @@ public:
 			ss << output_folder << output_filename << "_mask" << output_extension;
 			std::cout << "Saving : " << ss.str() << std::endl;
 			cv::imwrite(ss.str(), result_mask);
+
 		}
 	}
 
@@ -211,6 +231,9 @@ public:
 	{
 		return result_mask;
 	}
+
+	
+
 
 
 protected:

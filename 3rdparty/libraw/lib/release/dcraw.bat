@@ -59,4 +59,7 @@
 :: -disadcf  Do not use dcraw Foveon code even if compiled with demosaic-pack-GPL2
 :: -dngsdk   Use Adobe DNG SDK for DNG decode
 :: -dngflags N set DNG decoding options to value N
-dcraw_emu.exe -timing -F -6 -W -g 1 1 -j -o 1 -w -v -T tadeu_color_chart.CR2
+::dcraw_emu.exe -timing -F -6 -W -g 1 1 -j -o 1 -w -v -T Tadeu_CAM08_5258.CR2
+dcraw_emu.exe -timing -F -o 1 -a -j -w -6 -v -T wFigurante_CAM07_10472.CR2
+
+::dcraw_emu.exe -timing -4 -T -v Tadeu_CAM08_5258.CR2
