@@ -58,6 +58,11 @@ public:
 		morphological_kernel_size = kernel_size;
 	}
 
+	void saturateAbs(bool sat)
+	{
+		saturate_abs = sat;
+	}
+
 
 	void process(const cv::Mat& frame_bg_gray, const cv::Mat& frame_fg_gray)
 	{
@@ -73,7 +78,8 @@ public:
 		int64 start_time = cv::getTickCount();
 		cv::Mat frame_abs_diff;
 		cv::absdiff(frame_fg_gray, frame_bg_gray, frame_abs_diff);
-		frame_abs_diff.convertTo(frame_abs_diff, -1, 2, 0);
+		if (saturate_abs)
+			frame_abs_diff.convertTo(frame_abs_diff, -1, 2, 0);	// saturate
 		std::cout << double(cv::getTickCount() - start_time) / cv::getTickFrequency() << std::endl;
 		//
 		if (save_intermediate)
@@ -123,8 +129,15 @@ public:
 		cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS,
 			cv::Size(2 * morphological_kernel_size + 1, 2 * morphological_kernel_size + 1),
 			cv::Point(morphological_kernel_size, morphological_kernel_size));
+#if 0
 		cv::dilate(binary_threshold, dilate_img, element);
 		cv::erode(dilate_img, erode_img, element);
+#else
+		cv::dilate(binary_threshold, dilate_img, element);
+		cv::erode(dilate_img, erode_img, element);
+		cv::erode(erode_img, dilate_img, element);
+		cv::dilate(dilate_img, erode_img, element);
+#endif
 		std::cout << double(cv::getTickCount() - start_time) / cv::getTickFrequency() << std::endl;
 		if (save_intermediate)
 		{
@@ -144,7 +157,7 @@ public:
 		start_time = cv::getTickCount();
 		cv::Mat floodfill = erode_img.clone();
 		cv::floodFill(floodfill, cv::Point(0, 0), cv::Scalar(255));
-		cv::floodFill(floodfill, cv::Point(floodfill.cols / 2 , floodfill.rows - 1), cv::Scalar(255));
+		cv::floodFill(floodfill, cv::Point(floodfill.cols - 1 , floodfill.rows - 1), cv::Scalar(255));
 		//
 		// Invert floodfilled image
 		cv::Mat floodfill_inv;
@@ -245,6 +258,7 @@ protected:
 	std::string output_filename			= "out";
 	std::string output_extension	= ".tif";
 	int morphological_kernel_size	= 35;
+	bool saturate_abs				= false;
 };
 
 

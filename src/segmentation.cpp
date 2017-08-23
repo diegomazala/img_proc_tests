@@ -22,6 +22,7 @@ static const cv::String keys =
 "{out output        |      | output image or dir		 }"
 "{m morphological   | 21   | morphological element size    }"
 "{i intermediate    |      | save intermediate files    }"
+"{s saturate        |      | saturate abs diff    }"
 ;
 
 
@@ -49,6 +50,7 @@ int main(int argc, char* argv[])
 
 	const bool out_folder = fs::is_directory(out.c_str());
 	const bool save_intermediate = parser.has("intermediate");
+	const bool saturate_abs_diff = parser.has("saturate");
 
 	std::vector<cv::String> bg_files, fg_files;
 
@@ -121,6 +123,7 @@ int main(int argc, char* argv[])
 
 		BackgroundSubtraction bg_sub;
 		bg_sub.saveIntermediateFiles(save_intermediate);
+		bg_sub.saturateAbs(saturate_abs_diff);
 		bg_sub.setMorphologicalKernelSize(morphological_kernel_size);
 		bg_sub.setResultFileName(output_folder, output_basename, output_extension);
 		bg_sub.process(frame_bg, frame_fg);
