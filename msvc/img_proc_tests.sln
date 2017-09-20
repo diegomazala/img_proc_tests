@@ -21,9 +21,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_correction", "color_c
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "janus", "janus.vcxproj", "{CDAF2E1D-5D72-407D-88F6-584A442DE641}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "template_matching", "template_matching.vcxproj", "{4B1302C2-B497-4358-B5AD-CED17701B7F6}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_checker_detector", "color_checker_detector.vcxproj", "{52B9481A-A503-4634-9570-11417E2D75A8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "color_checker_pick_color", "color_checker_pick_color.vcxproj", "{69C423C9-24B3-4B2A-9D93-2434460A4FA5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -67,14 +67,14 @@ Global
 		{CDAF2E1D-5D72-407D-88F6-584A442DE641}.Debug|x64.Build.0 = Debug|x64
 		{CDAF2E1D-5D72-407D-88F6-584A442DE641}.Release|x64.ActiveCfg = Release|x64
 		{CDAF2E1D-5D72-407D-88F6-584A442DE641}.Release|x64.Build.0 = Release|x64
-		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Debug|x64.ActiveCfg = Debug|x64
-		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Debug|x64.Build.0 = Debug|x64
-		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Release|x64.ActiveCfg = Release|x64
-		{4B1302C2-B497-4358-B5AD-CED17701B7F6}.Release|x64.Build.0 = Release|x64
 		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.ActiveCfg = Debug|x64
 		{52B9481A-A503-4634-9570-11417E2D75A8}.Debug|x64.Build.0 = Debug|x64
 		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.ActiveCfg = Release|x64
 		{52B9481A-A503-4634-9570-11417E2D75A8}.Release|x64.Build.0 = Release|x64
+		{69C423C9-24B3-4B2A-9D93-2434460A4FA5}.Debug|x64.ActiveCfg = Debug|x64
+		{69C423C9-24B3-4B2A-9D93-2434460A4FA5}.Debug|x64.Build.0 = Debug|x64
+		{69C423C9-24B3-4B2A-9D93-2434460A4FA5}.Release|x64.ActiveCfg = Release|x64
+		{69C423C9-24B3-4B2A-9D93-2434460A4FA5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

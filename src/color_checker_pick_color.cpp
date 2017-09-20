@@ -40,6 +40,10 @@ static void onMouse(int event, int x, int y, int, void*)
 	int b = (unsigned)theRNG() & 255;
 	int g = (unsigned)theRNG() & 255;
 	int r = (unsigned)theRNG() & 255;
+	cv::Vec3b pixel = image.at<cv::Vec3b>(y, x);
+	int b = pixel.val[0];
+	int g = pixel.val[1];
+	int r = pixel.val[2];
 	Rect ccomp;
 	Scalar newVal = isColor ? Scalar(b, g, r) : Scalar(r*0.299 + g*0.587 + b*0.114);
 	Mat dst = isColor ? image : gray;
@@ -49,15 +53,18 @@ static void onMouse(int event, int x, int y, int, void*)
 		threshold(mask, mask, 1, 128, THRESH_BINARY);
 		area = floodFill(dst, mask, seed, newVal, &ccomp, Scalar(lo, lo, lo),
 			Scalar(up, up, up), flags);
+	
 		imshow("mask", mask);
 	}
 	else
 	{
 		area = floodFill(dst, seed, newVal, &ccomp, Scalar(lo, lo, lo),
 			Scalar(up, up, up), flags);
+
+		cv::rectangle(dst, ccomp, Scalar(255, 255, 255), 10, LINE_8);
 	}
 	imshow("image", dst);
-	cout << area << " pixels were repainted\n";
+	cout << area << " pixels were repainted => " << ccomp.x << ',' << ccomp.y << ',' << ccomp.width << ',' << ccomp.height << std::endl;
 }
 int main(int argc, char** argv)
 {
