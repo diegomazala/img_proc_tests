@@ -11,9 +11,11 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\color_checker_picker.cpp" />
     <ClCompile Include="..\src\color_correction.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\color_checker_picker.h" />
     <ClInclude Include="..\src\color_correction.h" />
     <ClInclude Include="..\src\color_fitting.h" />
   </ItemGroup>

@@ -41,9 +41,10 @@ static void show_window(const std::string& window_name, const cv::Mat& img)
 
 static void onMouse(int event, int x, int y, int a, void* a_ptr)
 {
+
 	if (event != cv::EVENT_LBUTTONDOWN)
 		return;
-
+	std::cout << x << ' ' << y << std::endl;
 	colorChecker.OnMouseEvent(event, x, y, a, a_ptr);
 }
 
@@ -70,30 +71,14 @@ int main(int argc, char** argv)
 		return 0;
 	}
 
-	const float w = float(colorChecker.image0.cols / 5);
-	const float h = float(colorChecker.image0.rows / 5);
-	cv::namedWindow("image", 0);
-	cv::resizeWindow("image", (int)w, (int)h);
+	colorChecker.SetupWindow();
+	cv::setMouseCallback(colorChecker.windowImage, onMouse, 0);
+	colorChecker.MainLoop();
+	colorChecker.ComputeMeanColors();
 
-	cv::createTrackbar("lo_diff", "image", &colorChecker.loDiff, 255, 0);
-	cv::createTrackbar("up_diff", "image", &colorChecker.upDiff, 255, 0);
-	cv::setMouseCallback("image", onMouse, 0);
-
-	for (;;)
-	{
-		cv::imshow("image", colorChecker.isColor ? colorChecker.image : colorChecker.gray);
-
-		char c = (char)cv::waitKey(0);
-		if (c == 27)
-		{
-			std::cout << "Exiting ...\n";
-			break;
-		}
-		
-		colorChecker.OnKeyboard(c);
-	}
-
-	colorChecker.Save();
+	std::stringstream ss;
+	ss << filename.substr(0, filename.size() - 4) << ".rgbmat";
+	colorChecker.Save(ss.str());
 
 	return 0;
 }

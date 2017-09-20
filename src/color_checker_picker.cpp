@@ -15,7 +15,7 @@ ColorCheckerPicker::ColorCheckerPicker()
 }
 
 
-void ColorCheckerPicker::LoadImage(const std::string& fileimage)
+bool ColorCheckerPicker::LoadImage(const std::string& fileimage)
 {
 	image0 = cv::imread(fileimage, cv::IMREAD_COLOR);
 
@@ -24,13 +24,15 @@ void ColorCheckerPicker::LoadImage(const std::string& fileimage)
 		image0.copyTo(image);
 		cvtColor(image0, gray, cv::COLOR_BGR2GRAY);
 		mask.create(image0.rows + 2, image0.cols + 2, CV_8UC1);
+		return true;
 	}
+	return false;
 }
 
 
-void ColorCheckerPicker::Save()
+void ColorCheckerPicker::Save(const std::string& rgbmat_filename)
 {
-	std::ofstream out_file("color_chart_picker.mat");
+	std::ofstream out_file(rgbmat_filename);
 	if (out_file.is_open())
 	{
 		out_file << std::fixed << colorRects.size() << " 3" << std::endl;
@@ -38,7 +40,7 @@ void ColorCheckerPicker::Save()
 		for (const cv::Rect& rect : colorRects)
 		{
 			auto mean = cv::mean(image(rect));
-			out_file << mean[0] << ' ' << mean[1] << ' ' << mean[2] << std::endl;
+			out_file << mean[2] << ' ' << mean[1] << ' ' << mean[0] << std::endl;
 		}
 	}
 	out_file.close();
@@ -49,6 +51,8 @@ void ColorCheckerPicker::OnMouseEvent(int event, int x, int y, int, void*)
 {
 	if (event != cv::EVENT_LBUTTONDOWN)
 		return;
+
+	std::cout << x << ' ' << y << std::endl;
 
 	cv::Point seed(x, y);
 	int lo = ffillMode == 0 ? 0 : loDiff;
@@ -69,7 +73,7 @@ void ColorCheckerPicker::OnMouseEvent(int event, int x, int y, int, void*)
 		area = floodFill(dst, mask, seed, newVal, &ccomp, cv::Scalar(lo, lo, lo),
 			cv::Scalar(up, up, up), flags);
 
-		cv::imshow("mask", mask);
+		cv::imshow(windowMask, mask);
 	}
 	else
 	{
@@ -81,7 +85,7 @@ void ColorCheckerPicker::OnMouseEvent(int event, int x, int y, int, void*)
 
 	colorRects.push_back(ccomp);
 
-	cv::imshow("image", dst);
+	cv::imshow(windowImage, dst);
 	//std::cout << area << " pixels were repainted => " << ccomp.x << ',' << ccomp.y << ',' << ccomp.width << ',' << ccomp.height << std::endl;
 }
 
@@ -127,14 +131,14 @@ void ColorCheckerPicker::UseMaskSwitch()
 {
 	if (useMask)
 	{
-		cv::destroyWindow("mask");
+		cv::destroyWindow(windowMask);
 		useMask = false;
 	}
 	else
 	{
-		cv::namedWindow("mask", 0);
+		cv::namedWindow(windowMask, 0);
 		mask = cv::Scalar::all(0);
-		cv::imshow("mask", mask);
+		cv::imshow(windowMask, mask);
 		useMask = true;
 	}
 }
@@ -173,5 +177,50 @@ void ColorCheckerPicker::ColorGraySwitch()
 		image0.copyTo(image);
 		mask = cv::Scalar::all(0);
 		isColor = true;
+	}
+}
+
+
+
+
+void ColorCheckerPicker::SetupWindow()
+{
+	//
+	// Color Checker Picker UI
+	//
+	const float w = float(image0.cols / 5);
+	const float h = float(image0.rows / 5);
+	cv::namedWindow(windowImage, 0);
+	cv::resizeWindow(windowImage, (int)w, (int)h);
+
+	cv::createTrackbar("lo_diff", windowImage, &loDiff, 255, 0);
+	cv::createTrackbar("up_diff", windowImage, &upDiff, 255, 0);
+	//cv::setMouseCallback("image", onMouse, 0);
+}
+
+void ColorCheckerPicker::MainLoop()
+{
+	for (;;)
+	{
+		cv::imshow(windowImage, isColor ? image : gray);
+
+		char c = (char)cv::waitKey(0);
+		if (c == 27 || c == 13)
+		{
+			std::cout << "Exiting ...\n";
+			break;
+		}
+
+		OnKeyboard(c);
+	}
+}
+
+
+void ColorCheckerPicker::ComputeMeanColors()
+{
+	meanColors.clear();
+	for (const cv::Rect& rect : colorRects)
+	{
+		meanColors.push_back(cv::mean(image(rect)));
 	}
 }

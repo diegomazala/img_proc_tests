@@ -197,4 +197,5 @@ static Eigen::Matrix<Type, 4, 4> compose_rigid_transformation(
 }
 
 
+
 #endif // _COLOR_CORRECTION_H_

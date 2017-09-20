@@ -12,6 +12,11 @@
 
 #include "color_correction.h"
 #include "color_fitting.h"
+#include "color_checker_picker.h"
+ColorCheckerPicker colorChecker;
+
+typedef double Type;
+
 
 static void show_window(const std::string& window_name, const cv::Mat& img)
 {
@@ -33,7 +38,7 @@ static void equalization_per_channel(const cv::Mat& input_img, cv::Mat& output_i
 	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
 }
 
-typedef double Type;
+
 
 
 static Eigen::Matrix<Type, 24, 3> color_checker_matrix()
@@ -78,6 +83,8 @@ bool matrix_from_file(const std::string& filename, Eigen::Matrix<Type, Eigen::Dy
 		int rows, cols;
 		infile >> rows >> cols;
 
+		mat.resize(rows, cols);
+
 		if (rows != mat.rows() || cols != mat.cols())
 		{
 			std::cerr << "Error: Could not read rows and cols from matrix file. Abort." << std::endl;
@@ -88,6 +95,21 @@ bool matrix_from_file(const std::string& filename, Eigen::Matrix<Type, Eigen::Dy
 		{
 			infile >> mat(i, 0) >> mat(i, 1) >> mat(i, 2);
 		}
+	}
+
+	return true;
+}
+
+
+bool matrix_from_color_checker_picker(const ColorCheckerPicker& color_checker, Eigen::Matrix<Type, Eigen::Dynamic, 3>& mat)
+{
+	mat.resize(colorChecker.meanColors.size(), 3);
+
+	for (size_t i = 0; i < colorChecker.meanColors.size(); i++)
+	{
+		mat(i, 0) = colorChecker.meanColors[i][2];
+		mat(i, 1) = colorChecker.meanColors[i][1];
+		mat(i, 2) = colorChecker.meanColors[i][0];
 	}
 
 	return true;
@@ -160,18 +182,27 @@ bool test_color_fitting_from_file(int argc, char** argv)
 }
 
 
+static void onMouse(int event, int x, int y, int a, void* a_ptr)
+{
+	colorChecker.OnMouseEvent(event, x, y, a, a_ptr);
+}
 
 // Global variables
 static const cv::String keys =
-"{help h usage ?  |      | in_img out_img src_rgb dst_rgb }"
-"{@image1         |      | input image                    }"
-"{@image2         |      | output image                   }"
-"{@rgb_matrix_src |      | rgb matrix source              }"
-"{@rgb_matrix_dst |      | rgb matrix target              }"
+"{help h usage ?  |      |                                }"
+"{img image       |      | input image                    }"
+"{dir directory   |      | input folder                   }"
+"{rgb rgb_matrix  |      | input rgb matrix '.rgbmat'     }"
+"{tgt rgb_target  |      | target rgb matrix '.rgbmat'    }"
 "{eq equalization |      | use equalization               }"
 ;
 
-// @function main 
+//
+// Examples:
+// ./color_correction.exe -img=../../data/figurante01/chart/Figurante_CAM08_7834.CR2.tiff -eq
+// ./color_correction.exe -img=../../data/figurante01/chart/Figurante_CAM08_7834.CR2.tiff -rgb=../../data/figurante01/chart/Figurante_CAM08_7834.CR2.rgbmat -eq
+// ./color_correction.exe -dir=../../data/casaco/fg/tiff/color_checker -eq
+//
 int main(int argc, char** argv)
 {
 	cv::CommandLineParser parser(argc, argv, keys);
@@ -183,45 +214,122 @@ int main(int argc, char** argv)
 	}
 
 	bool do_equalization = parser.has("equalization");
-	cv::String input_img_file = parser.get<cv::String>(0);
-	cv::String output_img_file = parser.get<cv::String>(1);
-	cv::String rgb_mat_src_file = parser.get<cv::String>(2);
-	cv::String rgb_mat_dst_file = parser.get<cv::String>(3);
+	cv::String input_img_file = parser.get<cv::String>("img");
+	cv::String input_folder = parser.get<cv::String>("dir");
+	cv::String rgb_mat_src_file = parser.get<cv::String>("rgb");
+	cv::String rgb_mat_dst_file = parser.get<cv::String>("tgt");
+	
+	std::vector<cv::String> input_files;
+	if (!input_folder.empty())
+		cv::glob(input_folder, input_files, true);
+	
+	if (input_files.empty())
+		input_files.push_back(input_img_file);
 
-
+	std::stringstream ss;
+	
+	// 
+	// Rgb Fitting init
+	//
 	RgbFitting<Type> rgb_fitting;
 
-	cv::Mat input_img = cv::imread(input_img_file, CV_LOAD_IMAGE_UNCHANGED);
-	cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
+	//
+	// Runnig Color Ckecker Picker
+	//
+	if (rgb_mat_src_file.empty())
+	{
+		for each (const cv::String& in_file in input_files)
+		{
+			if (colorChecker.LoadImage(in_file))
+			{
+				input_img_file = in_file;
+				break;
+			}
+		}
+		
+		if (colorChecker.image0.empty())
+		{
+			std::cout << "Image empty\n";
+			parser.printMessage();
+			return 0;
+		}
 
-	rgb_fitting.source = Eigen::Matrix<Type, 24, 3>();
-	matrix_from_file(rgb_mat_src_file, rgb_fitting.source);
+		colorChecker.SetupWindow();
+		cv::setMouseCallback(colorChecker.windowImage, onMouse, 0);
+		colorChecker.MainLoop();
+		colorChecker.ComputeMeanColors();
+
+		ss.str(std::string());
+		ss.clear();
+		ss << input_img_file.substr(0, input_img_file.find_last_of('.')) << ".rgbmat";
+		colorChecker.Save(ss.str());
+
+		matrix_from_color_checker_picker(colorChecker, rgb_fitting.source);
+	}
+	else
+	{
+		if (!matrix_from_file(rgb_mat_src_file, rgb_fitting.source))
+			return EXIT_FAILURE;
+	}
+
 
 	if (!rgb_mat_dst_file.empty())
 	{
-		rgb_fitting.target = Eigen::Matrix<Type, 24, 3>();
-		matrix_from_file(rgb_mat_dst_file, rgb_fitting.target);
+		if (!matrix_from_file(rgb_mat_dst_file, rgb_fitting.target))
+			return EXIT_FAILURE;
 	}
 	else
 	{
 		rgb_fitting.target = color_checker_matrix();
 	}
 
+	if (rgb_fitting.source.rows() != rgb_fitting.target.rows())
+	{
+		size_t min_size_rows = std::min(rgb_fitting.source.rows(), rgb_fitting.target.rows());
+		size_t min_size_cols = std::min(rgb_fitting.source.cols(), rgb_fitting.target.cols());
+
+		const auto source = rgb_fitting.source;
+		const auto target = rgb_fitting.target;
+
+		rgb_fitting.source.resize(min_size_rows, min_size_cols);
+		rgb_fitting.target.resize(min_size_rows, min_size_cols);
+
+		rgb_fitting.source = source.block(0, 0, min_size_rows, min_size_cols);
+		rgb_fitting.target = target.block(0, 0, min_size_rows, min_size_cols);
+	}
+
+	if (rgb_fitting.source.rows() < 22)
+	{
+		std::cerr << "Erro: You must set at least 22 colors. Abort" << std::endl;
+		return EXIT_FAILURE;
+	}
+
+
 	rgb_fitting.compute();
 
-	std::cout << "Applying color correction..." << std::endl;
 
-	transform_image_per_channel(output_img, input_img, rgb_fitting.functorResult);
-
-	if (argc > 4)
+	for each (const cv::String& in_file in input_files)
 	{
-		std::stringstream ss;
+		cv::Mat input_img = cv::imread(in_file, CV_LOAD_IMAGE_UNCHANGED);
 
-		std::cout << "Saving image corrected ..." << std::endl;
+		if (input_img.empty())
+			continue;
 
+		cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
+
+		std::cout << "Applying color correction..." << std::endl;
+		transform_image_per_channel(output_img, input_img, rgb_fitting.functorResult);
+
+
+		ss.str(std::string());
+		ss.clear();
+		ss << in_file.substr(0, in_file.find_last_of('.')) << "_corrected.tif";
+		cv::String output_img_file = ss.str();
+
+		std::cout << "Saving image corrected ... " << output_img_file << std::endl;
 		if (do_equalization)
 		{
-			// using a specific gray block in color checkerto shift rgb 
+			// using a specific gray block in color checker to shift rgb 
 			double shift_red = rgb_fitting.target(21, 0) / rgb_fitting.source(21, 0);
 			double shift_green = rgb_fitting.target(21, 1) / rgb_fitting.source(21, 1);
 			double shift_blue = rgb_fitting.target(21, 2) / rgb_fitting.source(21, 2);
@@ -235,6 +343,12 @@ int main(int argc, char** argv)
 			imwrite(output_img_file, output_img);
 		}
 	}
+	
+
+
+	
+
+	
 
 
 	return EXIT_SUCCESS;
