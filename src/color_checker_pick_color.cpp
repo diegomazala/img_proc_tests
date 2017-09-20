@@ -1,16 +1,18 @@
+#include "color_checker_picker.h"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/imgcodecs.hpp"
 #include "opencv2/videoio.hpp"
 #include "opencv2/highgui.hpp"
 #include <iostream>
-using namespace cv;
-using namespace std;
+
+ColorCheckerPicker colorChecker;
+
 static void help()
 {
-	cout << "\nThis program demonstrated the floodFill() function\n"
+	std::cout << "\nThis program demonstrated the floodFill() function\n"
 		"Call:\n"
-		"./ffilldemo [image_name -- Default: ../data/fruits.jpg]\n" << endl;
-	cout << "Hot keys: \n"
+		"./ffilldemo [image_name -- Default: ../data/fruits.jpg]\n" << std::endl;
+	std::cout << "Hot keys: \n"
 		"\tESC - quit the program\n"
 		"\tc - switch color/grayscale mode\n"
 		"\tm - switch mask mode\n"
@@ -19,152 +21,79 @@ static void help()
 		"\tf - use gradient floodfill with fixed(absolute) range\n"
 		"\tg - use gradient floodfill with floating(relative) range\n"
 		"\t4 - use 4-connectivity mode\n"
-		"\t8 - use 8-connectivity mode\n" << endl;
+		"\t8 - use 8-connectivity mode\n" << std::endl;
 }
-Mat image0, image, gray, mask;
-int ffillMode = 1;
-int loDiff = 20, upDiff = 20;
-int connectivity = 4;
-int isColor = true;
-bool useMask = false;
-int newMaskVal = 255;
-static void onMouse(int event, int x, int y, int, void*)
-{
-	if (event != EVENT_LBUTTONDOWN)
-		return;
-	Point seed = Point(x, y);
-	int lo = ffillMode == 0 ? 0 : loDiff;
-	int up = ffillMode == 0 ? 0 : upDiff;
-	int flags = connectivity + (newMaskVal << 8) +
-		(ffillMode == 1 ? FLOODFILL_FIXED_RANGE : 0);
-	int b = (unsigned)theRNG() & 255;
-	int g = (unsigned)theRNG() & 255;
-	int r = (unsigned)theRNG() & 255;
-	cv::Vec3b pixel = image.at<cv::Vec3b>(y, x);
-	int b = pixel.val[0];
-	int g = pixel.val[1];
-	int r = pixel.val[2];
-	Rect ccomp;
-	Scalar newVal = isColor ? Scalar(b, g, r) : Scalar(r*0.299 + g*0.587 + b*0.114);
-	Mat dst = isColor ? image : gray;
-	int area;
-	if (useMask)
-	{
-		threshold(mask, mask, 1, 128, THRESH_BINARY);
-		area = floodFill(dst, mask, seed, newVal, &ccomp, Scalar(lo, lo, lo),
-			Scalar(up, up, up), flags);
-	
-		imshow("mask", mask);
-	}
-	else
-	{
-		area = floodFill(dst, seed, newVal, &ccomp, Scalar(lo, lo, lo),
-			Scalar(up, up, up), flags);
 
-		cv::rectangle(dst, ccomp, Scalar(255, 255, 255), 10, LINE_8);
-	}
-	imshow("image", dst);
-	cout << area << " pixels were repainted => " << ccomp.x << ',' << ccomp.y << ',' << ccomp.width << ',' << ccomp.height << std::endl;
+
+
+
+static void show_window(const std::string& window_name, const cv::Mat& img)
+{
+	const float w = float(img.cols / 2);
+	const float h = w * (float(img.cols) / float(img.rows));
+	cv::namedWindow(window_name, CV_WINDOW_NORMAL);
+	cv::resizeWindow(window_name, (int)w, (int)h);
+	//cv::moveWindow(window_name, 0, 0);
+	cv::imshow(window_name, img);
 }
+
+
+
+static void onMouse(int event, int x, int y, int a, void* a_ptr)
+{
+	if (event != cv::EVENT_LBUTTONDOWN)
+		return;
+
+	colorChecker.OnMouseEvent(event, x, y, a, a_ptr);
+}
+
+
+
 int main(int argc, char** argv)
 {
 	cv::CommandLineParser parser(argc, argv,
 		"{help h | | show help message}{@image|../data/fruits.jpg| input image}"
 	);
+
 	if (parser.has("help"))
 	{
 		parser.printMessage();
 		return 0;
 	}
-	string filename = parser.get<string>("@image");
-	image0 = imread(filename, 1);
-	if (image0.empty())
+
+	std::string filename = parser.get<std::string>("@image");
+	colorChecker.LoadImage(filename);
+	if (colorChecker.image0.empty())
 	{
-		cout << "Image empty\n";
+		std::cout << "Image empty\n";
 		parser.printMessage();
 		return 0;
 	}
-	help();
-	image0.copyTo(image);
-	cvtColor(image0, gray, COLOR_BGR2GRAY);
-	mask.create(image0.rows + 2, image0.cols + 2, CV_8UC1);
-	
-	const float w = float(image0.cols / 5);
-	const float h = float(image0.rows / 5);
-	namedWindow("image", 0);
+
+	const float w = float(colorChecker.image0.cols / 5);
+	const float h = float(colorChecker.image0.rows / 5);
+	cv::namedWindow("image", 0);
 	cv::resizeWindow("image", (int)w, (int)h);
 
-	createTrackbar("lo_diff", "image", &loDiff, 255, 0);
-	createTrackbar("up_diff", "image", &upDiff, 255, 0);
-	setMouseCallback("image", onMouse, 0);
+	cv::createTrackbar("lo_diff", "image", &colorChecker.loDiff, 255, 0);
+	cv::createTrackbar("up_diff", "image", &colorChecker.upDiff, 255, 0);
+	cv::setMouseCallback("image", onMouse, 0);
+
 	for (;;)
 	{
-		imshow("image", isColor ? image : gray);
-		char c = (char)waitKey(0);
+		cv::imshow("image", colorChecker.isColor ? colorChecker.image : colorChecker.gray);
+
+		char c = (char)cv::waitKey(0);
 		if (c == 27)
 		{
-			cout << "Exiting ...\n";
+			std::cout << "Exiting ...\n";
 			break;
 		}
-		switch (c)
-		{
-		case 'c':
-			if (isColor)
-			{
-				cout << "Grayscale mode is set\n";
-				cvtColor(image0, gray, COLOR_BGR2GRAY);
-				mask = Scalar::all(0);
-				isColor = false;
-			}
-			else
-			{
-				cout << "Color mode is set\n";
-				image0.copyTo(image);
-				mask = Scalar::all(0);
-				isColor = true;
-			}
-			break;
-		case 'm':
-			if (useMask)
-			{
-				destroyWindow("mask");
-				useMask = false;
-			}
-			else
-			{
-				namedWindow("mask", 0);
-				mask = Scalar::all(0);
-				imshow("mask", mask);
-				useMask = true;
-			}
-			break;
-		case 'r':
-			cout << "Original image is restored\n";
-			image0.copyTo(image);
-			cvtColor(image, gray, COLOR_BGR2GRAY);
-			mask = Scalar::all(0);
-			break;
-		case 's':
-			cout << "Simple floodfill mode is set\n";
-			ffillMode = 0;
-			break;
-		case 'f':
-			cout << "Fixed Range floodfill mode is set\n";
-			ffillMode = 1;
-			break;
-		case 'g':
-			cout << "Gradient (floating range) floodfill mode is set\n";
-			ffillMode = 2;
-			break;
-		case '4':
-			cout << "4-connectivity mode is set\n";
-			connectivity = 4;
-			break;
-		case '8':
-			cout << "8-connectivity mode is set\n";
-			connectivity = 8;
-			break;
-		}
+		
+		colorChecker.OnKeyboard(c);
 	}
+
+	colorChecker.Save();
+
 	return 0;
 }
