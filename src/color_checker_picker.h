@@ -27,7 +27,7 @@ public:
 
 	cv::Mat image, image0, gray, mask;
 	int ffillMode = 1;
-	int loDiff = 10, upDiff = 10;
+	int loDiff = 20, upDiff = 10;
 	int connectivity = 4;
 	int isColor = true;
 	bool useMask = false;

@@ -52,8 +52,6 @@ void ColorCheckerPicker::OnMouseEvent(int event, int x, int y, int, void*)
 	if (event != cv::EVENT_LBUTTONDOWN)
 		return;
 
-	std::cout << x << ' ' << y << std::endl;
-
 	cv::Point seed(x, y);
 	int lo = ffillMode == 0 ? 0 : loDiff;
 	int up = ffillMode == 0 ? 0 : upDiff;
@@ -213,6 +211,9 @@ void ColorCheckerPicker::MainLoop()
 
 		OnKeyboard(c);
 	}
+
+	cv::destroyWindow(windowMask);
+	cv::destroyWindow(windowImage);
 }
 
 

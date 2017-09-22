@@ -18,10 +18,10 @@ ColorCheckerPicker colorChecker;
 typedef double Type;
 
 
-static void show_window(const std::string& window_name, const cv::Mat& img)
+static void show_window(const std::string& window_name, const cv::Mat& img, float window_scale)
 {
-	const float w = float(img.cols / 2);
-	const float h = w * (float(img.cols) / float(img.rows));
+	const float w = float(img.cols) * window_scale;
+	const float h = float(img.rows) * window_scale;
 	cv::namedWindow(window_name, CV_WINDOW_NORMAL);
 	cv::resizeWindow(window_name, (int)w, (int)h);
 	//cv::moveWindow(window_name, 0, 0);
@@ -336,20 +336,23 @@ int main(int argc, char** argv)
 
 			cv::Mat histog_img = cv::Mat(input_img.size(), input_img.type());
 			equalization_per_channel(output_img, histog_img, shift_red, shift_green, shift_blue);
+
+			show_window("Color_Correcion", histog_img, 0.2f);
 			imwrite(output_img_file, histog_img);
+			
+			int delay = (input_files.size() > 1) ? 1000 : -1;
+			cv::waitKey(delay);
 		}
 		else
 		{
+			show_window("Color_Correcion", output_img, 0.2f);
 			imwrite(output_img_file, output_img);
+			
+			int delay = (input_files.size() > 1) ? 1000 : -1;
+			cv::waitKey(delay);
 		}
 	}
 	
-
-
-	
-
-	
-
-
+	cv::destroyAllWindows();
 	return EXIT_SUCCESS;
 }
