@@ -1,7 +1,6 @@
-#include "color_checker_picker.h"
+
+
 #include "opencv2/imgproc.hpp"
-#include "opencv2/imgcodecs.hpp"
-#include "opencv2/videoio.hpp"
 #include "opencv2/highgui.hpp"
 #include <iostream>
 
@@ -17,7 +16,6 @@ static const cv::String keys =
 
 
 
-
 static void show_window(const std::string& window_name, const cv::Mat& img, float window_scale = 1.0f)
 {
 	const float w = float(img.cols) * window_scale;
@@ -27,7 +25,6 @@ static void show_window(const std::string& window_name, const cv::Mat& img, floa
 	cv::moveWindow(window_name, 0, 0);
 	cv::imshow(window_name, img);
 }
-
 
 
 int main(int argc, char** argv)
@@ -55,7 +52,6 @@ int main(int argc, char** argv)
 		return EXIT_FAILURE;
 	}
 	
-	
 	cv::Mat blurred(image.size(), image.type());
 	cv::GaussianBlur(image, blurred, cv::Size(radius, radius), 0);
 
@@ -76,6 +72,7 @@ int main(int argc, char** argv)
 
 		cv::circle(mask, maxIdx, radius * 2, cv::Scalar(0), cv::FILLED);
 	}
+
 
 	cv::waitKey();
 	return 0;
