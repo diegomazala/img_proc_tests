@@ -2,200 +2,176 @@
 #ifndef _COLOR_CORRECTION_H_
 #define _COLOR_CORRECTION_H_
 
-#include <Eigen/Dense>
-#include <vector>
+#include "rigid_transformation.h"
 
-template <typename Type>
-static Type DegToRad(Type angle_in_degrees)
+#include "color_fitting.h"
+#include "color_checker_picker.h"
+
+typedef double Type;
+
+
+static void show_window(const std::string& window_name, const cv::Mat& img, float window_scale)
 {
-	return angle_in_degrees * (Type)(M_PI / 180.0);
+	const float w = float(img.cols) * window_scale;
+	const float h = float(img.rows) * window_scale;
+	cv::namedWindow(window_name, CV_WINDOW_NORMAL);
+	cv::resizeWindow(window_name, (int)w, (int)h);
+	//cv::moveWindow(window_name, 0, 0);
+	cv::imshow(window_name, img);
 }
 
-template <typename Type>
-static Type RadToDeg(Type angle_in_radians)
+static void equalization_per_channel(const cv::Mat& input_img, cv::Mat& output_img, double r, double g, double b)
 {
-	return angle_in_radians * (Type)(180.0 / M_PI);
+	std::vector<cv::Mat> channels;
+	cv::split(input_img, channels); //split the image into channels
+	cv::normalize(channels[0], channels[0], 0, 65535.0 * b, cv::NORM_MINMAX, CV_16U);
+	cv::normalize(channels[1], channels[1], 0, 65535.0 * g, cv::NORM_MINMAX, CV_16U);
+	cv::normalize(channels[2], channels[2], 0, 65535.0 * r, cv::NORM_MINMAX, CV_16U);
+	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @fn	static bool compute_rigid_transformation(const std::vector<Eigen::Vector3d>& src, const std::vector<Eigen::Vector3d>& dst, Eigen::Matrix3d& R, Eigen::Vector3d& t);
-///
-/// @brief	Compute the rotation and translation that transform a source point set to a target point set
-///
-/// @author	Diego
-/// @date	07/10/2015
-///
-/// @param	src		   		The source point set.
-/// @param	dst		   		The target point set.
-/// @param [in,out]	pts_dst	The rotation matrix.
-/// @param [in,out]	pts_dst	The translation vector.
-/// @return	True if found the transformation, false otherwise.
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template<typename Type>
-static bool compute_rigid_transformation(
-	const std::vector<Eigen::Matrix<Type, 3, 1>>& src,
-	const std::vector<Eigen::Matrix<Type, 3, 1>>& dst,
-	Eigen::Matrix<Type, 3, 3>& R,
-	Eigen::Matrix<Type, 3, 1>& t)
+
+
+
+static Eigen::Matrix<Type, 24, 3> color_checker_matrix()
 {
-	//
-	// Verify if the sizes of point arrays are the same 
-	//
-	assert(src.size() == dst.size());
-	int pairSize = (int)src.size();
-	Eigen::Matrix<Type, 3, 1> center_src(0, 0, 0), center_dst(0, 0, 0);
+	Eigen::Matrix<Type, 24, 3> rgb_matrix;
+	rgb_matrix <<
+		115, 82, 68,
+		194, 150, 130,
+		98, 122, 157,
+		87, 108, 67,
+		133, 128, 177,
+		103, 189, 170,
 
-	// 
-	// Compute centroid
-	//
-	for (int i = 0; i<pairSize; ++i)
+		214, 126, 44,
+		80, 91, 166,
+		193, 90, 99,
+		94, 60, 108,
+		157, 188, 64,
+		224, 163, 46,
+
+		56, 61, 150,
+		70, 148, 73,
+		175, 54, 60,
+		231, 199, 31,
+		187, 86, 149,
+		8, 133, 161,
+
+		243, 243, 242,
+		200, 200, 200,
+		160, 160, 160,
+		122, 122, 121,
+		85, 85, 85,
+		52, 52, 52;
+	return rgb_matrix;
+}
+
+bool matrix_from_file(const std::string& filename, Eigen::Matrix<Type, Eigen::Dynamic, 3>& mat)
+{
+	std::ifstream infile(filename);
+	if (infile.is_open())
 	{
-		center_src += src[i];
-		center_dst += dst[i];
+		int rows, cols;
+		infile >> rows >> cols;
+
+		mat.resize(rows, cols);
+
+		if (rows != mat.rows() || cols != mat.cols())
+		{
+			std::cerr << "Error: Could not read rows and cols from matrix file. Abort." << std::endl;
+			return false;
+		}
+
+		for (int i = 0; i < mat.rows(); ++i)
+		{
+			infile >> mat(i, 0) >> mat(i, 1) >> mat(i, 2);
+		}
 	}
-	center_src /= (Type)pairSize;
-	center_dst /= (Type)pairSize;
-
-
-	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> S(pairSize, 3), D(pairSize, 3);
-	for (int i = 0; i<pairSize; ++i)
-	{
-		S.row(i) = src[i] - center_src;
-		D.row(i) = dst[i] - center_dst;
-	}
-	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> Dt = D.transpose();
-	Eigen::Matrix<Type, 3, 3> H = Dt * S;
-	Eigen::Matrix<Type, 3, 3> W, U, V;
-
-	//
-	// Compute SVD
-	//
-	Eigen::JacobiSVD<Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic>> svd;
-	svd.compute(H, Eigen::ComputeThinU | Eigen::ComputeThinV);
-
-	if (!svd.computeU() || !svd.computeV())
-	{
-		//	std::cerr << "<Error> Decomposition error" << std::endl;
-		return false;
-	}
-
-	//
-	// Compute rotation matrix and translation vector
-	// 
-	Eigen::Matrix<Type, 3, 3> Vt = svd.matrixV().transpose();
-	R = svd.matrixU() * Vt;
-	t = center_dst - R * center_src;
 
 	return true;
 }
 
 
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-/// @fn	static bool compute_rigid_transformation(const std::vector<Eigen::Vector3d>& src, const std::vector<Eigen::Vector3d>& dst, Eigen::Matrix3d& R, Eigen::Vector3d& t);
-///
-/// @brief	Compute the rotation and translation that transform a source point set to a target point set
-///
-/// @author	Diego
-/// @date	07/10/2015
-///
-/// @param	src		   		The source point set.
-/// @param	dst		   		The target point set.
-/// @param [in,out]	pts_dst	The rotation matrix.
-/// @param [in,out]	pts_dst	The translation vector.
-/// @return	True if found the transformation, false otherwise.
-////////////////////////////////////////////////////////////////////////////////////////////////////
-template<typename Type>
-static bool compute_rigid_transformation(
-	const std::vector<Eigen::Matrix<Type, 4, 1>>& src,
-	const std::vector<Eigen::Matrix<Type, 4, 1>>& dst,
-	Eigen::Matrix<Type, 3, 3>& R,
-	Eigen::Matrix<Type, 3, 1>& t)
+bool matrix_from_color_checker_picker(const ColorCheckerPicker& color_checker, Eigen::Matrix<Type, Eigen::Dynamic, 3>& mat)
 {
-	//
-	// Verify if the sizes of point arrays are the same 
-	//
-	assert(src.size() == dst.size());
-	int pairSize = (int)src.size();
-	Eigen::Matrix<Type, 3, 1> center_src(0, 0, 0), center_dst(0, 0, 0);
+	mat.resize(color_checker.meanColors.size(), 3);
 
-	// 
-	// Compute centroid
-	//
-	for (int i = 0; i < pairSize; ++i)
+	for (size_t i = 0; i < color_checker.meanColors.size(); i++)
 	{
-		center_src += (src[i] / src[i][3]).head<3>();
-		center_dst += (dst[i] / dst[i][3]).head<3>();
+		mat(i, 0) = color_checker.meanColors[i][2];
+		mat(i, 1) = color_checker.meanColors[i][1];
+		mat(i, 2) = color_checker.meanColors[i][0];
 	}
-	center_src /= (Type)pairSize;
-	center_dst /= (Type)pairSize;
-
-
-	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> S(pairSize, 3), D(pairSize, 3);
-	for (int i = 0; i < pairSize; ++i)
-	{
-		S.row(i) = (src[i] / src[i][3]).head<3>() - center_src;
-		D.row(i) = (dst[i] / dst[i][3]).head<3>() - center_dst;
-	}
-	Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic> Dt = D.transpose();
-	Eigen::Matrix<Type, 3, 3> H = Dt * S;
-	Eigen::Matrix<Type, 3, 3> W, U, V;
-
-	//
-	// Compute SVD
-	//
-	Eigen::JacobiSVD<Eigen::Matrix<Type, Eigen::Dynamic, Eigen::Dynamic>> svd;
-	svd.compute(H, Eigen::ComputeThinU | Eigen::ComputeThinV);
-
-	if (!svd.computeU() || !svd.computeV())
-	{
-		//	std::cerr << "<Error> Decomposition error" << std::endl;
-		return false;
-	}
-
-	//
-	// Compute rotation matrix and translation vector
-	// 
-	Eigen::Matrix<Type, 3, 3> Vt = svd.matrixV().transpose();
-	R = svd.matrixU() * Vt;
-	t = center_dst - R * center_src;
 
 	return true;
 }
 
 
-
-template<typename Type, const int Rows>
-static bool compute_rigid_transformation(
-	const std::vector<Eigen::Matrix<Type, Rows, 1>>& src,
-	const std::vector<Eigen::Matrix<Type, Rows, 1>>& dst,
-	Eigen::Matrix<Type, 4, 4>& mat)
+static void transform_image_per_channel(
+	cv::Mat& output_img,
+	const cv::Mat& input_img,
+	const Eigen::Matrix<Type, 3, 2>& alpha_beta)
 {
-	Eigen::Matrix<Type, 3, 3> R;
-	Eigen::Matrix<Type, 3, 1> t;
-	if (compute_rigid_transformation(src, dst, R, t))
+	std::vector<cv::Mat> channels;
+	cv::split(input_img, channels); //split the image into channels
+
+	for (int i = 0; i < 3; ++i)
 	{
-		mat.block(0, 0, 3, 3) = R;
-		mat.row(3).setZero();
-		mat.col(3) = t.homogeneous();
-		return true;
+		channels[i].convertTo(channels[i], input_img.depth(), alpha_beta(2 - i, 0), alpha_beta(2 - i, 1));
 	}
-	return false;
+
+	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
 }
 
 
-template<typename Type>
-static Eigen::Matrix<Type, 4, 4> compose_rigid_transformation(
-	const Eigen::Matrix<Type, 3, 3>& R,
-	const Eigen::Matrix<Type, 3, 1>& t)
+bool test_color_fitting_from_file(int argc, char** argv)
 {
-	Eigen::Matrix<Type, 4, 4> rigidTransform;
-	rigidTransform.block(0, 0, 3, 3) = R;
-	rigidTransform.row(3).setZero();
-	rigidTransform.col(3) = t.homogeneous();
-	return rigidTransform;
-}
+	RgbFitting<Type> rgb_fitting;
 
+	cv::Mat input_img = cv::imread(argv[1], CV_LOAD_IMAGE_UNCHANGED);
+	cv::Mat output_img = cv::Mat(input_img.size(), input_img.type());
+
+
+	rgb_fitting.source = Eigen::Matrix<Type, 24, 3>();
+	matrix_from_file(argv[2], rgb_fitting.source);
+
+	if (argc > 3)
+	{
+		rgb_fitting.target = Eigen::Matrix<Type, 24, 3>();
+		matrix_from_file(argv[3], rgb_fitting.target);
+	}
+	else
+	{
+		rgb_fitting.target = color_checker_matrix();
+	}
+
+	rgb_fitting.compute();
+
+	std::cout << "Applying color correction..." << std::endl;
+
+	transform_image_per_channel(output_img, input_img, rgb_fitting.functorResult);
+
+	if (argc > 4)
+	{
+		std::stringstream ss;
+
+		std::cout << "Saving image corrected ..." << std::endl;
+		imwrite(argv[4], output_img);
+
+		double shift_red = rgb_fitting.target(21, 0) / rgb_fitting.source(21, 0);
+		double shift_green = rgb_fitting.target(21, 1) / rgb_fitting.source(21, 1);
+		double shift_blue = rgb_fitting.target(21, 2) / rgb_fitting.source(21, 2);
+
+		cv::Mat histog_img = cv::Mat(input_img.size(), input_img.type());
+		equalization_per_channel(output_img, histog_img, shift_red, shift_green, shift_blue);
+		ss.str(std::string());
+		ss.clear();
+		ss << argv[4] << "_equalized.tif";
+		imwrite(ss.str(), histog_img);
+	}
+	return true;
+}
 
 
 #endif // _COLOR_CORRECTION_H_

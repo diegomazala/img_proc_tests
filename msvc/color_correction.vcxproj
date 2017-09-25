@@ -18,6 +18,7 @@
     <ClInclude Include="..\src\color_checker_picker.h" />
     <ClInclude Include="..\src\color_correction.h" />
     <ClInclude Include="..\src\color_fitting.h" />
+    <ClInclude Include="..\src\rigid_transformation.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8B35B876-1D58-4F1F-BE59-05546DCD46BB}</ProjectGuid>
