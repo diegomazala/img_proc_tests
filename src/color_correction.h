@@ -24,11 +24,19 @@ static void equalization_per_channel(const cv::Mat& input_img, cv::Mat& output_i
 {
 	std::vector<cv::Mat> channels;
 	cv::split(input_img, channels); //split the image into channels
+#if 0
 	cv::normalize(channels[0], channels[0], 0, 65535.0 * b, cv::NORM_MINMAX, CV_16U);
 	cv::normalize(channels[1], channels[1], 0, 65535.0 * g, cv::NORM_MINMAX, CV_16U);
 	cv::normalize(channels[2], channels[2], 0, 65535.0 * r, cv::NORM_MINMAX, CV_16U);
-	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
+#else
+	channels[0].convertTo(channels[0], -1, r);
+	channels[1].convertTo(channels[1], -1, g);
+	channels[2].convertTo(channels[2], -1, b);
+#endif
+	cv::merge(channels, output_img); //merge 3 channels 
 }
+
+
 
 
 
@@ -115,12 +123,38 @@ static void transform_image_per_channel(
 {
 	std::vector<cv::Mat> channels;
 	cv::split(input_img, channels); //split the image into channels
-
 	for (int i = 0; i < 3; ++i)
 	{
 		channels[i].convertTo(channels[i], input_img.depth(), alpha_beta(2 - i, 0), alpha_beta(2 - i, 1));
 	}
+	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
+}
 
+
+
+static void transform_image_per_channel(
+	cv::Mat& output_img,
+	const cv::Mat& input_img,
+	Type r, Type g, Type b)
+{
+	std::vector<cv::Mat> channels;
+	cv::split(input_img, channels); //split the image into channels
+
+#if 1
+	channels[0].convertTo(channels[0], input_img.depth(), r);
+	channels[1].convertTo(channels[1], input_img.depth(), g);
+	channels[2].convertTo(channels[2], input_img.depth(), b);
+
+
+//	channels[0] *= value;
+//	channels[1] *= value;
+//	channels[2] *= value;
+#else
+	for (int i = 0; i < 3; ++i)
+	{
+		channels[i].convertTo(channels[i], input_img.depth(), alpha_beta(2 - i, 0), alpha_beta(2 - i, 1));
+	}
+#endif
 	cv::merge(channels, output_img); //merge 3 channels including the modified 1st channel into one image
 }
 

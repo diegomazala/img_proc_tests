@@ -14,13 +14,24 @@
 # define int64 int64_hack_
 
 
+static void equalization_per_channel(const cv::Mat& input_img, cv::Mat& output_img, double r, double g, double b)
+{
+	std::vector<cv::Mat> channels;
+	cv::split(input_img, channels); //split the image into channels
+	cv::normalize(channels[0], channels[0], 0, 65535.0 * b, cv::NORM_MINMAX, CV_16U);
+	cv::normalize(channels[1], channels[1], 0, 65535.0 * g, cv::NORM_MINMAX, CV_16U);
+	cv::normalize(channels[2], channels[2], 0, 65535.0 * r, cv::NORM_MINMAX, CV_16U);
+	cv::merge(channels, output_img); //merge 3 channels 
+}
+
+
 
 int main(int argc, const char **argv)
 {
 	const std::string inFilename = argv[1];
 	const std::string outFilename = argv[2];
 
-	cv::Mat input = cv::imread(inFilename, cv::IMREAD_UNCHANGED);	// 18 2 3
+	cv::Mat input = cv::imread(inFilename, cv::IMREAD_COLOR);	// 18 0 3
 	if (input.empty())
 	{
 		std::cerr << "Cannot read image file: " << inFilename << std::endl;
@@ -31,7 +42,10 @@ int main(int argc, const char **argv)
 		<< input.depth() << ' '
 		<< input.channels() << std::endl;
 
-	cv::imwrite("../data/_out_io.tif", input);
+	cv::Mat output = input;
+	cv::imwrite(outFilename, output);
+
+	return 0;
 
 	int tags[] = { TIFFTAG_COMPRESSION, COMPRESSION_NONE };
 	bool success = cv::imwrite("../data/_out_COMPRESSION_NONE.tif", input, std::vector<int>(tags, tags + 2));

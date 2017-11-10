@@ -7,12 +7,16 @@
 #include <iostream>
 #include <fstream>
 
-
+static cv::Point center_of_rect(const cv::Rect& r)
+{
+	return cv::Point(r.width / 2 + r.x, r.height / 2 + r.y);
+}
 
 ColorCheckerPicker::ColorCheckerPicker()
 {
-
 }
+
+
 
 
 bool ColorCheckerPicker::LoadImage(const std::string& fileimage)
@@ -23,7 +27,6 @@ bool ColorCheckerPicker::LoadImage(const std::string& fileimage)
 	{
 		image0.copyTo(image);
 		cvtColor(image0, gray, cv::COLOR_BGR2GRAY);
-		mask.create(image0.rows + 2, image0.cols + 2, CV_8UC1);
 		return true;
 	}
 	return false;
@@ -47,11 +50,8 @@ void ColorCheckerPicker::Save(const std::string& rgbmat_filename)
 }
 
 
-void ColorCheckerPicker::OnMouseEvent(int event, int x, int y, int, void*)
+cv::Rect ColorCheckerPicker::FloodFill(int x, int y)
 {
-	if (event != cv::EVENT_LBUTTONDOWN)
-		return;
-
 	cv::Point seed(x, y);
 	int lo = ffillMode == 0 ? 0 : loDiff;
 	int up = ffillMode == 0 ? 0 : upDiff;
@@ -64,27 +64,85 @@ void ColorCheckerPicker::OnMouseEvent(int event, int x, int y, int, void*)
 	cv::Rect ccomp;
 	cv::Scalar newVal = isColor ? cv::Scalar(b, g, r) : cv::Scalar(r*0.299 + g*0.587 + b*0.114);
 	cv::Mat dst = isColor ? image : gray;
-	int area;
-	if (useMask)
-	{
-		cv::threshold(mask, mask, 1, 128, cv::THRESH_BINARY);
-		area = floodFill(dst, mask, seed, newVal, &ccomp, cv::Scalar(lo, lo, lo),
-			cv::Scalar(up, up, up), flags);
+	
+	int area = floodFill(
+				image, seed, newVal, &ccomp, 
+				cv::Scalar(lo, lo, lo),
+				cv::Scalar(up, up, up), flags);
 
-		cv::imshow(windowMask, mask);
-	}
-	else
-	{
-		area = floodFill(dst, seed, newVal, &ccomp, cv::Scalar(lo, lo, lo),
-			cv::Scalar(up, up, up), flags);
+	//cv::rectangle(dst, ccomp, cv::Scalar(255, 255, 255), 10, cv::LINE_8);
+	//cv::circle(dst, seed, 10, cv::Scalar(255, 255, 255), 10, cv::LINE_8);
 
-		cv::rectangle(dst, ccomp, cv::Scalar(255, 255, 255), 10, cv::LINE_8);
-	}
+	return ccomp;
+}
+
+void ColorCheckerPicker::OnMouseEvent(int event, int x, int y, int, void*)
+{
+	if (event != cv::EVENT_LBUTTONDOWN)
+		return;
+
+	cv::Mat dst_img = isColor ? image : gray;
+
+	cv::Rect ccomp = FloodFill(x, y);
+	cv::circle(dst_img, center_of_rect(ccomp), 10, cv::Scalar(255, 255, 255), 10, cv::LINE_8);
 
 	colorRects.push_back(ccomp);
 
-	cv::imshow(windowImage, dst);
-	//std::cout << area << " pixels were repainted => " << ccomp.x << ',' << ccomp.y << ',' << ccomp.width << ',' << ccomp.height << std::endl;
+	int min_x = colorRects[0].x;
+	int max_x = colorRects[0].x;
+	int min_y = colorRects[0].y;
+	int max_y = colorRects[0].y;
+
+	for (int i = 1; i < colorRects.size(); ++i)
+	{
+		if (colorRects[i].x < min_x)
+			min_x = colorRects[i].x;
+
+		if (colorRects[i].x > max_x)
+			max_x = colorRects[i].x;
+
+		if (colorRects[i].y < min_y)
+			min_y = colorRects[i].y;
+		
+		if (colorRects[i].y > max_y)
+			max_y = colorRects[i].y;
+	}
+
+	int rect_width = colorRects[0].width;
+	int rect_height = colorRects[0].height;
+
+	max_x += rect_width;
+	max_y += rect_height;
+
+	cv::Rect big_rect(min_x, min_y, max_x - min_x, max_y - min_y);
+
+	int width_step = big_rect.width / 6;
+	int height_step = big_rect.height / 4;
+
+	
+
+	if (colorRects.size() > 2)
+	{
+		colorRects.clear();
+		std::vector<cv::Point> seeds;
+
+		//cv::rectangle(dst_img, big_rect, cv::Scalar(255, 255, 0), 10, cv::LINE_8);
+
+		for (int i = 0; i < 4; ++i)
+			for (int j = 0; j < 6; ++j)
+				seeds.push_back(
+					cv::Point(min_x + j * width_step + width_step / 2, min_y + i * height_step + height_step / 2));
+
+		for (int i = 0; i < seeds.size() - 1; ++i)
+		{
+			const cv::Rect rect = FloodFill(seeds[i].x, seeds[i].y);
+			colorRects.push_back(rect);
+			cv::rectangle(dst_img, rect, cv::Scalar(255, 255, 255), 10, cv::LINE_8);
+		}
+	}
+
+
+	cv::imshow(windowImage, dst_img);
 }
 
 
@@ -94,9 +152,6 @@ void ColorCheckerPicker::OnKeyboard(char c)
 	{
 	case 'c':
 		ColorGraySwitch();
-		break;
-	case 'm':
-		UseMaskSwitch();
 		break;
 	case 'r':
 		Reset();
@@ -125,28 +180,11 @@ void ColorCheckerPicker::OnKeyboard(char c)
 }
 
 
-void ColorCheckerPicker::UseMaskSwitch()
-{
-	if (useMask)
-	{
-		cv::destroyWindow(windowMask);
-		useMask = false;
-	}
-	else
-	{
-		cv::namedWindow(windowMask, 0);
-		mask = cv::Scalar::all(0);
-		cv::imshow(windowMask, mask);
-		useMask = true;
-	}
-}
-
 void ColorCheckerPicker::Reset()
 {
 	std::cout << "Pipeline Reset" << std::endl;
 	image0.copyTo(image);
 	cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
-	mask = cv::Scalar::all(0);
 	colorRects.clear();
 }
 
@@ -166,14 +204,12 @@ void ColorCheckerPicker::ColorGraySwitch()
 	{
 		std::cout << "Grayscale mode is set\n";
 		cv::cvtColor(image0, gray, cv::COLOR_BGR2GRAY);
-		mask = cv::Scalar::all(0);
 		isColor = false;
 	}
 	else
 	{
 		std::cout << "Color mode is set\n";
 		image0.copyTo(image);
-		mask = cv::Scalar::all(0);
 		isColor = true;
 	}
 }
@@ -212,16 +248,19 @@ void ColorCheckerPicker::MainLoop()
 		OnKeyboard(c);
 	}
 
-	cv::destroyWindow(windowMask);
 	cv::destroyWindow(windowImage);
 }
 
 
 void ColorCheckerPicker::ComputeMeanColors()
 {
+	int i = 0;
 	meanColors.clear();
 	for (const cv::Rect& rect : colorRects)
 	{
-		meanColors.push_back(cv::mean(image(rect)));
+		//std::cout << i++ << " : " << rect.x << ", " << rect.y << " - "  << rect.width << ", " << rect.height << std::endl;
+		const cv::Scalar s = cv::mean(image(rect));
+		meanColors.push_back(s);
+		//std::cout << "MeanColor: "  << s << std::endl;
 	}
 }

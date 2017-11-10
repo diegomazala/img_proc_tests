@@ -94,6 +94,16 @@ int main(int argc, char** argv)
 		colorChecker.MainLoop();
 		colorChecker.ComputeMeanColors();
 
+		auto s = colorChecker.meanColors[21];
+		std::cout << "--Mean: " << s << std::endl;
+
+		transform_image_per_channel(colorChecker.image, colorChecker.image, 122.0 / s[0], 122.0 / s[1], 122.0 / s[2]);
+
+		colorChecker.ComputeMeanColors();
+
+		std::cout << "--Mean: " << colorChecker.meanColors[21] << std::endl;
+		//return EXIT_FAILURE;
+
 		ss.str(std::string());
 		ss.clear();
 		ss << input_img_file.substr(0, input_img_file.find_last_of('.')) << ".rgbmat";
@@ -117,7 +127,9 @@ int main(int argc, char** argv)
 	{
 		rgb_fitting.target = color_checker_matrix();
 	}
-
+	//
+	// Matching size of the matrices
+	//
 	if (rgb_fitting.source.rows() != rgb_fitting.target.rows())
 	{
 		size_t min_size_rows = std::min(rgb_fitting.source.rows(), rgb_fitting.target.rows());
@@ -135,17 +147,15 @@ int main(int argc, char** argv)
 
 	if (rgb_fitting.source.rows() < 22)
 	{
-		std::cerr << "Erro: You must set at least 22 colors. Abort" << std::endl;
+		std::cerr << "Error: You must have at least 22 colors set. Abort" << std::endl;
 		return EXIT_FAILURE;
 	}
 
-
 	rgb_fitting.compute();
-
 
 	for each (const cv::String& in_file in input_files)
 	{
-		cv::Mat input_img = cv::imread(in_file, CV_LOAD_IMAGE_UNCHANGED);
+		cv::Mat input_img = cv::imread(in_file, cv::IMREAD_COLOR);
 
 		if (input_img.empty())
 			continue;
@@ -169,11 +179,14 @@ int main(int argc, char** argv)
 			double shift_green = rgb_fitting.target(21, 1) / rgb_fitting.source(21, 1);
 			double shift_blue = rgb_fitting.target(21, 2) / rgb_fitting.source(21, 2);
 
+			std::vector<cv::Mat> channels;
+			cv::split(input_img, channels);
+
 			cv::Mat histog_img = cv::Mat(input_img.size(), input_img.type());
 			equalization_per_channel(output_img, histog_img, shift_red, shift_green, shift_blue);
 
 			show_window("Color_Correcion", histog_img, 0.2f);
-			imwrite(output_img_file, histog_img);
+			cv::imwrite(output_img_file, histog_img);
 			
 			int delay = (input_files.size() > 1) ? 1000 : -1;
 			cv::waitKey(delay);
@@ -181,8 +194,12 @@ int main(int argc, char** argv)
 		else
 		{
 			show_window("Color_Correcion", output_img, 0.2f);
-			imwrite(output_img_file, output_img);
+			cv::imwrite(output_img_file, output_img);
 			
+			//cv::Mat cv_image_gamma(cv::Size(output_img.cols, output_img.rows), CV_16UC3);
+			//output_img.convertTo(cv_image_gamma, -1, 2.222, 45);
+			//cv::imwrite("../data/cv_image_gamma.tif", cv_image_gamma);
+
 			int delay = (input_files.size() > 1) ? 1000 : -1;
 			cv::waitKey(delay);
 		}

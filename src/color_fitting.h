@@ -98,22 +98,25 @@ struct RgbFitting
 		}
 
 
-		//std::cout
-		//	<< "Functor Result: " << std::endl
-		//	<< functorResult << std::endl << std::endl;
+		std::cout
+			<< "Functor Result: " << std::endl
+			<< functorResult << std::endl << std::endl;
 
-		
-		//for (int i = 0; i < source.rows(); ++i)
-		//{
-		//	std::cout
-		//		<< std::fixed << std::setprecision(0)
-		//		<< source.row(i) << " <-> "
-		//		<< target.row(i) << "  =  "
-		//		<< std::fixed << std::setprecision(2)
-		//		<< source(i, 0) * functorResult(0, 0) + functorResult(0, 1) << ", "
-		//		<< source(i, 1) * functorResult(1, 0) + functorResult(1, 1) << ", "
-		//		<< source(i, 2) * functorResult(2, 0) + functorResult(2, 1) << std::endl;
-		//}
+		for (int i = 0; i < source.rows(); ++i)
+		{
+			std::cout
+				<< std::fixed << std::setprecision(0)
+				<< source.row(i) << " <-> "
+				<< target.row(i) << "  =  "
+				<< std::fixed << std::setprecision(2)
+				<< source(i, 0) * functorResult(0, 0) + functorResult(0, 1) << ", "
+				<< source(i, 1) * functorResult(1, 0) + functorResult(1, 1) << ", "
+				<< source(i, 2) * functorResult(2, 0) + functorResult(2, 1) << std::endl;
+
+			source(i, 0) = source(i, 0) * functorResult(0, 0) + functorResult(0, 1);
+			source(i, 1) = source(i, 1) * functorResult(1, 0) + functorResult(1, 1);
+			source(i, 2) = source(i, 2) * functorResult(2, 0) + functorResult(2, 1);
+		}
 	}
 };
 
